@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 const NAV_LINKS = ["Inicio", "Servicios", "Monitoreo", "Nosotros", "Contacto"];
 
@@ -105,6 +106,7 @@ export default function CacaoTech() {
   const [statsVisible, setStatsVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const statsRef = useRef(null);
+  const navigate=useNavigate();
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 80);
@@ -121,6 +123,10 @@ export default function CacaoTech() {
     if (statsRef.current) observer.observe(statsRef.current);
     return () => observer.disconnect();
   }, []);
+
+  const authPage=()=>{
+    navigate("/comenzar")
+  }
 
   return (
     <div
@@ -254,7 +260,7 @@ export default function CacaoTech() {
         </div>
 
         {/* Desktop CTA */}
-        <button className="btn-primary hidden md:inline-flex ">Comenzar</button>
+        <button className="btn-primary hidden md:inline-flex " onClick={authPage}>Comenzar</button>
       </nav>
 
       {/* Mobile menu overlay */}
