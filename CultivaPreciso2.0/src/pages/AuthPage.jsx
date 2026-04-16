@@ -1,19 +1,327 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Eye,
   EyeOff,
   Mail,
   Lock,
   User,
-  Phone,
-  CheckSquare,
   Leaf,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  sendPasswordResetEmail,
+} from "firebase/auth";
+import { auth, GoogleProvider } from "../firebase.js";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase.js";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+
+// ── Helpers de validación ──
+const validators = {
+  email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()),
+  password: (v) => v.length >= 6,
+  strongPassword: (v) => ({
+    length: v.length >= 8,
+    upper: /[A-Z]/.test(v),
+    lower: /[a-z]/.test(v),
+    number: /[0-9]/.test(v),
+    special: /[^A-Za-z0-9]/.test(v),
+  }),
+  name: (v) => v.trim().length >= 2,
+  match: (a, b) => a === b && a.length > 0,
+};
+
+const getPasswordStrength = (checks) => {
+  const passed = Object.values(checks).filter(Boolean).length;
+  if (passed <= 1)
+    return { label: "Muy débil", color: "#EF4444", width: "20%" };
+  if (passed === 2) return { label: "Débil", color: "#F97316", width: "40%" };
+  if (passed === 3) return { label: "Media", color: "#EAB308", width: "60%" };
+  if (passed === 4) return { label: "Fuerte", color: "#22C55E", width: "80%" };
+  return { label: "Muy fuerte", color: "#16A34A", width: "100%" };
+};
+
+const translateError = (code) => {
+  const errors = {
+    "auth/user-not-found": "No existe una cuenta con ese correo.",
+    "auth/wrong-password": "Contraseña incorrecta.",
+    "auth/invalid-credential": "Correo o contraseña incorrectos.",
+    "auth/email-already-in-use": "Ese correo ya está registrado.",
+    "auth/invalid-email": "El correo no es válido.",
+    "auth/weak-password": "La contraseña es muy débil (mín. 6 caracteres).",
+    "auth/popup-closed-by-user": "Cerraste el popup de Google.",
+    "auth/too-many-requests": "Demasiados intentos. Intenta más tarde.",
+    "auth/network-request-failed": "Error de red. Revisa tu conexión.",
+  };
+  return errors[code] || "Ocurrió un error. Intenta de nuevo.";
+};
+
+function FieldWrapper({ label, error, touched, success, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-white text-sm font-medium">{label}</label>
+      {children}
+      {touched && error && (
+        <p className="text-xs text-red-400 flex items-center gap-1 mt-0.5">
+          <XCircle size={12} /> {error}
+        </p>
+      )}
+      {touched && success && !error && (
+        <p className="text-xs text-green-400 flex items-center gap-1 mt-0.5">
+          <CheckCircle size={12} /> {success}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function TextInput({
+  icon,
+  type = "text",
+  value,
+  onChange,
+  onBlur,
+  placeholder,
+  rightIcon,
+  hasError,
+  hasSuccess,
+  touched,
+}) {
+  const borderColor =
+    touched && hasError
+      ? "ring-1 ring-red-500"
+      : touched && hasSuccess
+        ? "ring-1 ring-green-500"
+        : "";
+
+  return (
+    <div className={`relative mt-1 ${borderColor} rounded-xl`}>
+      <span className="text-white/60 absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4">
+        {icon}
+      </span>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        className="w-full pl-10 pr-10 text-white bg-[#55362E] h-11 rounded-xl outline-none placeholder:text-white/25 text-sm"
+      />
+      {rightIcon && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2">
+          {rightIcon}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function PasswordStrengthBar({ password }) {
+  if (!password) return null;
+  const checks = validators.strongPassword(password);
+  const strength = getPasswordStrength(checks);
+
+  return (
+    <div className="mt-1.5 flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-300"
+            style={{ width: strength.width, backgroundColor: strength.color }}
+          />
+        </div>
+        <span
+          className="text-xs font-medium"
+          style={{
+            color: strength.color,
+            minWidth: "70px",
+            textAlign: "right",
+          }}
+        >
+          {strength.label}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+        {[
+          { key: "length", label: "Mín. 8 caracteres" },
+          { key: "upper", label: "Mayúscula" },
+          { key: "lower", label: "Minúscula" },
+          { key: "number", label: "Número" },
+          { key: "special", label: "Carácter especial" },
+        ].map(({ key, label }) => (
+          <p
+            key={key}
+            className={`text-xs flex items-center gap-1 ${checks[key] ? "text-green-400" : "text-white/40"}`}
+          >
+            {checks[key] ? <CheckCircle size={10} /> : <XCircle size={10} />}
+            {label}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function AuthPage() {
   const [tab, setTab] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [globalError, setGlobalError] = useState("");
+  const [globalSuccess, setGlobalSuccess] = useState("");
+  const navigate = useNavigate();
+
+  // Login
+  const [login, setLogin] = useState({ email: "", password: "" });
+  const [loginTouched, setLoginTouched] = useState({});
+  const loginErrors = {
+    email: !validators.email(login.email) ? "Ingresa un correo válido." : "",
+    password: !validators.password(login.password)
+      ? "La contraseña debe tener al menos 6 caracteres."
+      : "",
+  };
+  const loginValid = Object.values(loginErrors).every((e) => !e);
+
+  // Register
+  const [reg, setReg] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirm: "",
+  });
+  const [regTouched, setRegTouched] = useState({});
+  const regErrors = {
+    firstName: !validators.name(reg.firstName) ? "Mínimo 2 caracteres." : "",
+    lastName: !validators.name(reg.lastName) ? "Mínimo 2 caracteres." : "",
+    email: !validators.email(reg.email) ? "Ingresa un correo válido." : "",
+    password: !validators.password(reg.password) ? "Mínimo 6 caracteres." : "",
+    confirm: !validators.match(reg.password, reg.confirm)
+      ? "Las contraseñas no coinciden."
+      : "",
+  };
+  const regValid = Object.values(regErrors).every((e) => !e);
+
+  const touchLoginField = (field) =>
+    setLoginTouched((p) => ({ ...p, [field]: true }));
+  const touchRegField = (field) =>
+    setRegTouched((p) => ({ ...p, [field]: true }));
+  const touchAllLogin = () => setLoginTouched({ email: true, password: true });
+  const touchAllReg = () =>
+    setRegTouched({
+      firstName: true,
+      lastName: true,
+      email: true,
+      password: true,
+      confirm: true,
+    });
+  const clearMessages = () => {
+    setGlobalError("");
+    setGlobalSuccess("");
+  };
+
+  const handleLogin = async () => {
+    touchAllLogin();
+    if (!loginValid) return;
+    setLoading(true);
+    clearMessages();
+    try {
+      await signInWithEmailAndPassword(auth, login.email, login.password);
+      Swal.fire({
+        icon: "success",
+        title: "Bienvenido",
+        text: "Inicio de sesión exitoso",
+        timer: 1500,
+        showConfirmButton: false,
+        background: "#422D1A",
+        color: "#ffffff",
+      });
+      navigate("/dashboardAgricultor");
+    } catch (err) {
+      setGlobalError(translateError(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    touchAllReg();
+    if (!regValid) return;
+    setLoading(true);
+    clearMessages();
+    try {
+      const userCred = await createUserWithEmailAndPassword(
+        auth,
+        reg.email,
+        reg.password,
+      );
+      try {
+        await setDoc(doc(db, "users", userCred.user.uid), {
+          firstName: reg.firstName,
+          lastName: reg.lastName,
+          email: reg.email,
+          uid: userCred.user.uid,
+          createdAt: serverTimestamp(),
+        });
+      } catch (firestoreErr) {
+        console.log(
+          "Firestore ERROR:",
+          firestoreErr.code,
+          firestoreErr.message,
+        );
+      }
+      Swal.fire({
+        icon: "success",
+        title: "Bienvenido",
+        text: "Registro exitoso",
+        timer: 1500,
+        showConfirmButton: false,
+        background: "#422D1A",
+        color: "#ffffff",
+      });
+      navigate("/dashboardAgricultor");
+    } catch (authErr) {
+      console.log("Auth ERROR:", authErr.code, authErr.message);
+      setGlobalError(translateError(authErr.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setLoading(true);
+    clearMessages();
+    try {
+      await signInWithPopup(auth, GoogleProvider);
+      navigate("/dashboardAgricultor");
+    } catch (err) {
+      setGlobalError(translateError(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    touchLoginField("email");
+    if (loginErrors.email) return;
+    clearMessages();
+    try {
+      await sendPasswordResetEmail(auth, login.email);
+      setGlobalSuccess("✅ Correo de recuperación enviado. Revisa tu bandeja.");
+    } catch (err) {
+      setGlobalError(translateError(err.code));
+    }
+  };
+
+  const home=()=>{
+    navigate("/")
+  }
 
   return (
     <div className="flex min-h-screen font-sans">
@@ -28,53 +336,46 @@ export default function AuthPage() {
         <div className="relative text-white">
           <div className="flex items-center gap-2 mb-4">
             <Leaf size={20} />
-            <span className="text-sm font-medium">AgroPrecisión</span>
+            <span className="text-sm font-medium">CultivaPreciso</span>
           </div>
-          <h2 className="text-3xl font-bold leading-tight max-w-xs mb-3">
-            Agricultura inteligente para cultivos sostenibles
-          </h2>
-          <p className="text-sm text-white/80 max-w-xs leading-relaxed">
-            Optimiza tus cultivos de cacao con análisis de datos, mapeo
-            inteligente y recomendaciones basadas en inteligencia artificial.
-          </p>
         </div>
       </div>
 
       {/* Panel derecho */}
-      <div className="w-[50%] bg-[#55362E] flex flex-col justify-center px-8 py-10 overflow-y-auto">
-        <div className="bg-[#382615]/40 px-4 py-10 rounded-2xl">
-          {/* Heading dinámico */}
-          {tab === "login" ? (
-            <>
-            <div className="flex justify-center">
-                 <div className="w-[90%]" >
-                 <h1 className="text-2xl font-bold text-white mb-1">
-                Bienvenido de vuelta
+      <div className="w-full md:w-[50%] bg-[#55362E] flex flex-col justify-center px-8 py-10 overflow-y-auto">
+        <div className="relative bg-[#382615]/40 px-4 py-10 rounded-2xl">
+          <div className="absolute -top-3 -right-3 w-12 h-12 bg-[#CC9633] rounded-full hover:bg-[#B5832D]">
+            <button className="flex justify-center items-center h-full w-full cursor-pointer" onClick={home}>
+              <svg
+              
+                class="w-6 h-6 text-[#55362E]"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M11.293 3.293a1 1 0 0 1 1.414 0l6 6 2 2a1 1 0 0 1-1.414 1.414L19 12.414V19a2 2 0 0 1-2 2h-3a1 1 0 0 1-1-1v-3h-2v3a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2v-6.586l-.293.293a1 1 0 0 1-1.414-1.414l2-2 6-6Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+          <div className="flex justify-center">
+            <div className="w-[90%]">
+              <h1 className="text-2xl font-bold text-white mb-1">
+                {tab === "login" ? "Bienvenido de vuelta" : "Crear cuenta"}
               </h1>
               <p className="text-sm text-gray-200 mb-5">
-                Ingresa tus credenciales para acceder a tu cuenta
+                {tab === "login"
+                  ? "Ingresa tus credenciales para acceder a tu cuenta"
+                  : "Completa tus datos para empezar a usar AgroPrecisión"}
               </p>
             </div>
-
-            </div>
-        
-             
-            </>
-          ) : (
-            <>
-            <div className="flex justify-center">
-                <div className="w-[90%]">
-                     <h1 className="text-2xl font-bold text-white mb-1">
-                Crear cuenta
-              </h1>
-              <p className="text-sm text-gray-200 mb-5">
-                Completa tus datos para empezar a usar AgroPrecisión
-              </p>
-                </div>
-            </div>
-             
-            </>
-          )}
+          </div>
 
           {/* Tabs */}
           <div className="flex justify-center">
@@ -85,8 +386,13 @@ export default function AuthPage() {
               ].map(({ key, label }) => (
                 <button
                   key={key}
-                  onClick={() => setTab(key)}
-                  className={`flex-1 py-2 text-sm rounded-md font-medium transition-all ${
+                  onClick={() => {
+                    setTab(key);
+                    clearMessages();
+                    setLoginTouched({});
+                    setRegTouched({});
+                  }}
+                  className={`flex-1 py-2 text-sm rounded-md font-medium transition-all cursor-pointer ${
                     tab === key
                       ? "bg-[#CC9633] text-gray-900 shadow-sm"
                       : "text-white"
@@ -98,75 +404,122 @@ export default function AuthPage() {
             </div>
           </div>
 
-          {/* ── FORMULARIO LOGIN ── */}
+          {/* Banners globales */}
+          {globalError && (
+            <div className="flex justify-center mb-3">
+              <div className="w-[90%] bg-red-900/30 border border-red-500/30 text-red-300 text-xs px-3 py-2 rounded-lg flex items-center gap-2">
+                <AlertCircle size={14} className="shrink-0" /> {globalError}
+              </div>
+            </div>
+          )}
+          {globalSuccess && (
+            <div className="flex justify-center mb-3">
+              <div className="w-[90%] bg-green-900/30 border border-green-500/30 text-green-300 text-xs px-3 py-2 rounded-lg flex items-center gap-2">
+                <CheckCircle size={14} className="shrink-0" /> {globalSuccess}
+              </div>
+            </div>
+          )}
+
+          {/* ── LOGIN ── */}
           {tab === "login" && (
             <div className="flex justify-center">
-              <div className="flex flex-col gap-2 w-[90%] justify-center">
-                <div className="space-y-0.5">
-                  <label className="text-white text-sm font-medium">
-                    Correo electrónico
-                  </label>
-                  <div className="relative my-2">
-                    <Mail className="text-white absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cream/30" />
-                    <input
-                      type="email"
-                      className="w-full pl-10 text-white bg-[#55362E] focus:border-gold/40 focus:ring-gold/20 h-11 rounded-xl"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-0.5">
-                  <label className="text-white text-sm font-medium">
-                    Contraseña
-                  </label>
-                  <div className="relative my-2">
-                    <Lock className="text-white absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cream/30" />
-                    <input
-                      type="password"
-                      className="w-full pl-10 text-white bg-[#55362E] border-cream/10 text-cream focus:border-gold/40 focus:ring-gold/20 h-11 rounded-xl"
-                    />
-                  </div>
-                </div>
+              <div className="flex flex-col gap-3 w-[90%]">
+                <FieldWrapper
+                  label="Correo electrónico"
+                  error={loginErrors.email}
+                  touched={loginTouched.email}
+                >
+                  <TextInput
+                    icon={<Mail size={16} />}
+                    type="email"
+                    value={login.email}
+                    onChange={(e) =>
+                      setLogin((p) => ({ ...p, email: e.target.value }))
+                    }
+                    onBlur={() => touchLoginField("email")}
+                    hasError={!!loginErrors.email}
+                    hasSuccess={!loginErrors.email}
+                    touched={loginTouched.email}
+                  />
+                </FieldWrapper>
 
-                <div className="flex justify-end">
-                  <a
-                    href="#"
-                    className="text-xs text-[#CC9633] font-bold hover:underline"
+                <FieldWrapper
+                  label="Contraseña"
+                  error={loginErrors.password}
+                  touched={loginTouched.password}
+                >
+                  <TextInput
+                    icon={<Lock size={16} />}
+                    type={showPassword ? "text" : "password"}
+                    value={login.password}
+                    onChange={(e) =>
+                      setLogin((p) => ({ ...p, password: e.target.value }))
+                    }
+                    onBlur={() => touchLoginField("password")}
+                    onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                    hasError={!!loginErrors.password}
+                    hasSuccess={!loginErrors.password}
+                    touched={loginTouched.password}
+                    rightIcon={
+                      <button
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-white/50 hover:text-white transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff size={16} />
+                        ) : (
+                          <Eye size={16} />
+                        )}
+                      </button>
+                    }
+                  />
+                </FieldWrapper>
+
+                <div className="flex justify-end -mt-1">
+                  <button
+                    onClick={handleForgotPassword}
+                    className="text-xs text-[#CC9633] font-bold hover:underline cursor-pointer"
                   >
                     ¿Olvidaste tu contraseña?
-                  </a>
+                  </button>
                 </div>
-                <button className="w-full py-3 bg-[#CC9633] hover:bg-[#B5832D] text-black text-sm font-medium rounded-lg transition-colors">
-                  Iniciar Sesión
+
+                <button
+                  onClick={handleLogin}
+                  disabled={loading}
+                  className="w-full py-3 bg-[#CC9633] hover:bg-[#B5832D] disabled:opacity-60 text-black text-sm font-medium rounded-lg transition-colors cursor-pointer"
+                >
+                  {loading ? "Cargando..." : "Iniciar Sesión"}
                 </button>
+
                 <div className="flex justify-center">
                   <button
-                    type="button"
-                    className="w-[40%] mt-4 rounded-2xl text-xs font-bold flex justify-center gap-2 border border-[#CC9633] text-white p-2 mr-2 cursor-pointer hover:bg-[#CC9633] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleGoogle}
+                    disabled={loading}
+                    className="w-[60%] mt-2 rounded-2xl text-xs font-bold flex justify-center items-center gap-2 border border-[#CC9633] text-white p-2 cursor-pointer hover:bg-[#CC9633] transition-colors disabled:opacity-50"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      x="0px"
-                      y="0px"
-                      width="18"
-                      height="18 "
+                      width="16"
+                      height="16"
                       viewBox="0 0 48 48"
                     >
                       <path
                         fill="#FFC107"
                         d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
-                      ></path>
+                      />
                       <path
                         fill="#FF3D00"
                         d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"
-                      ></path>
+                      />
                       <path
                         fill="#4CAF50"
                         d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"
-                      ></path>
+                      />
                       <path
                         fill="#1976D2"
                         d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
-                      ></path>
+                      />
                     </svg>
                     Continúa con Google
                   </button>
@@ -175,99 +528,147 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* ── FORMULARIO REGISTER ── */}
+          {/* ── REGISTER ── */}
           {tab === "register" && (
-           <div className="flex justify-center">
-             <div className="flex flex-col gap-3 w-[90%]">
-              <div className="flex gap-3">
-                <div className="flex flex-col w-[50%]">
-                  <label className=" text-white text-sm font-medium">
-                    Nombre
-                  </label>
-                  <div className="relative mt-2">
-                    <User className="text-white absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cream/30" />
-                    <input
-                      className="w-full pl-10 text-white bg-[#55362E] border-cream/10 text-cream focus:border-gold/40 focus:ring-gold/20 h-11 rounded-xl"
-                      type="text"
-                    />
+            <div className="flex justify-center">
+              <div className="flex flex-col gap-3 w-[90%]">
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <FieldWrapper
+                      label="Nombre"
+                      error={regErrors.firstName}
+                      touched={regTouched.firstName}
+                    >
+                      <TextInput
+                        icon={<User size={16} />}
+                        value={reg.firstName}
+                        onChange={(e) =>
+                          setReg((p) => ({ ...p, firstName: e.target.value }))
+                        }
+                        onBlur={() => touchRegField("firstName")}
+                        hasError={!!regErrors.firstName}
+                        hasSuccess={!regErrors.firstName}
+                        touched={regTouched.firstName}
+                      />
+                    </FieldWrapper>
+                  </div>
+                  <div className="flex-1">
+                    <FieldWrapper
+                      label="Apellido"
+                      error={regErrors.lastName}
+                      touched={regTouched.lastName}
+                    >
+                      <TextInput
+                        icon={<User size={16} />}
+                        value={reg.lastName}
+                        onChange={(e) =>
+                          setReg((p) => ({ ...p, lastName: e.target.value }))
+                        }
+                        onBlur={() => touchRegField("lastName")}
+                        hasError={!!regErrors.lastName}
+                        hasSuccess={!regErrors.lastName}
+                        touched={regTouched.lastName}
+                      />
+                    </FieldWrapper>
                   </div>
                 </div>
-                <div className="flex flex-col w-[50%]">
-                  <label className="text-white text-sm font-medium">
-                    Apellido
-                  </label>
-                  <div className="relative mt-2">
-                    <User className="text-white absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cream/30" />
-                    <input
-                      type="text"
-                      className=" w-full pl-10 text-white bg-[#55362E] border-cream/10 text-cream focus:border-gold/40 focus:ring-gold/20 h-11 rounded-xl"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div>
-                <label className=" text-white text-sm font-medium">
-                  Correo electrónico
-                </label>
-                <div className="relative mt-2">
-                  <Mail className="text-white absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cream/30" />
-                  <input
+                <FieldWrapper
+                  label="Correo electrónico"
+                  error={regErrors.email}
+                  touched={regTouched.email}
+                >
+                  <TextInput
+                    icon={<Mail size={16} />}
                     type="email"
-                    className="w-full pl-10 text-white bg-[#55362E] border-cream/10 text-cream focus:border-gold/40 focus:ring-gold/20 h-11 rounded-xl"
+                    value={reg.email}
+                    onChange={(e) =>
+                      setReg((p) => ({ ...p, email: e.target.value }))
+                    }
+                    onBlur={() => touchRegField("email")}
+                    hasError={!!regErrors.email}
+                    hasSuccess={!regErrors.email}
+                    touched={regTouched.email}
                   />
-                </div>
-              </div>
+                </FieldWrapper>
 
-              <div>
-                <label className=" text-white text-sm font-medium">
-                  Contraseña
-                </label>
-                <div className="relative mt-2">
-                  <Lock className="text-white absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cream/30" />
-                  <input
-                    type="password"
-                    className="w-full pl-10 text-white bg-[#55362E] border-cream/10 text-cream focus:border-gold/40 focus:ring-gold/20 h-11 rounded-xl"
+                <FieldWrapper
+                  label="Contraseña"
+                  error={regErrors.password}
+                  touched={regTouched.password}
+                >
+                  <TextInput
+                    icon={<Lock size={16} />}
+                    type={showPassword ? "text" : "password"}
+                    value={reg.password}
+                    onChange={(e) =>
+                      setReg((p) => ({ ...p, password: e.target.value }))
+                    }
+                    onBlur={() => touchRegField("password")}
+                    hasError={!!regErrors.password}
+                    hasSuccess={!regErrors.password}
+                    touched={regTouched.password}
+                    rightIcon={
+                      <button
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-white/50 hover:text-white transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff size={16} />
+                        ) : (
+                          <Eye size={16} />
+                        )}
+                      </button>
+                    }
                   />
-                </div>
-              </div>
+                  <PasswordStrengthBar password={reg.password} />
+                </FieldWrapper>
 
-              <div>
-                <label className=" text-white text-sm font-medium">
-                  Confirmar contraseña
-                </label>
-                <div className="relative mt-2">
-                  <Lock className="text-white absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cream/30" />
-                  <input
-                    type="password"
-                    className="w-full pl-10 text-white bg-[#55362E] border-cream/10 text-cream focus:border-gold/40 focus:ring-gold/20 h-11 rounded-xl"
+                <FieldWrapper
+                  label="Confirmar contraseña"
+                  error={regErrors.confirm}
+                  touched={regTouched.confirm}
+                  success={
+                    reg.confirm && !regErrors.confirm
+                      ? "Las contraseñas coinciden."
+                      : ""
+                  }
+                >
+                  <TextInput
+                    icon={<Lock size={16} />}
+                    type={showConfirm ? "text" : "password"}
+                    value={reg.confirm}
+                    onChange={(e) =>
+                      setReg((p) => ({ ...p, confirm: e.target.value }))
+                    }
+                    onBlur={() => touchRegField("confirm")}
+                    onKeyDown={(e) => e.key === "Enter" && handleRegister()}
+                    hasError={!!regErrors.confirm}
+                    hasSuccess={reg.confirm && !regErrors.confirm}
+                    touched={regTouched.confirm}
+                    rightIcon={
+                      <button
+                        onClick={() => setShowConfirm(!showConfirm)}
+                        className="text-white/50 hover:text-white transition-colors"
+                      >
+                        {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    }
                   />
-                </div>
+                </FieldWrapper>
+
+                <button
+                  onClick={handleRegister}
+                  disabled={loading}
+                  className="w-full py-3 bg-[#CC9633] hover:bg-[#B5832D] disabled:opacity-60 text-black text-sm font-medium rounded-lg transition-colors mt-1 cursor-pointer"
+                >
+                  {loading ? "Creando cuenta..." : "Crear cuenta"}
+                </button>
               </div>
-              <button className="w-full py-3 bg-[#CC9633] hover:bg-[#B5832D] text-black text-sm font-medium rounded-lg transition-colors">
-                Crear cuenta
-              </button>
             </div>
-           </div>
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ── Componentes auxiliares ── */
-
-function InputField({ icon, type, placeholder, rightIcon }) {
-  return (
-    <div className="flex items-center border border-gray-200 rounded-lg px-3 h-11 gap-2 w-full">
-      {icon && <span className="text-gray-400 shrink-0">{icon}</span>}
-      <input
-        type={type}
-        placeholder={placeholder}
-        className="flex-1 text-sm outline-none bg-transparent text-gray-800 placeholder:text-gray-400 min-w-0"
-      />
-      {rightIcon}
     </div>
   );
 }
