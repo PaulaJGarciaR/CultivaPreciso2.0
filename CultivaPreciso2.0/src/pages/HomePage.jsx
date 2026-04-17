@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
+
+
 const NAV_LINKS = ["Inicio", "Servicios", "Monitoreo", "Nosotros", "Contacto"];
 
 const STATS = [
