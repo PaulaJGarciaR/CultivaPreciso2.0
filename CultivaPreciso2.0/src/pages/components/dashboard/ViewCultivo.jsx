@@ -1,22 +1,54 @@
 // src/components/dashboard/ViewCultivo.jsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../../../firebase";
 import { SectionHeader } from "./shared";
 
-// Solo las variedades requeridas
 const VARIEDADES = ["Híbrido", "TCS (Trinitario Colombia Selection)"];
 
-export default function ViewCultivo({ cultivo, setCultivo }) {
-  const [form,  setForm]  = useState({ ...cultivo });
-  const [saved, setSaved] = useState(false);
-  // "ha" | "m2" — el usuario elige cómo quiere ingresar el área
-  const [unidad, setUnidad] = useState("ha");
+export default function ViewCultivo({ cultivo, setCultivo, user }) {
+  const [form,    setForm]    = useState({ ...cultivo });
+  const [saved,   setSaved]   = useState(false);
+  const [saving,  setSaving]  = useState(false);   // ← faltaba
+  const [loading, setLoading] = useState(true);    // ← faltaba
+  const [unidad,  setUnidad]  = useState("ha");
+
+  // ── Cargar datos desde Firestore ─────────────────────────────────────────
+  useEffect(() => {
+    if (!user?.uid) { setLoading(false); return; }
+
+    const cargarDatos = async () => {
+      try {
+        const snap = await getDoc(doc(db, "cultivos", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          // Solo tomar los campos de ViewCultivo, ignorar lotes/calendarNotes
+          const camposCultivo = {
+            nombre:       data.nombre       ?? "",
+            hectareas:    data.hectareas     ?? "",
+            variedad:     data.variedad      ?? "",
+            fechaSiembra: data.fechaSiembra  ?? "",
+            region:       data.region        ?? "",
+            notas:        data.notas         ?? "",
+          };
+          setForm(camposCultivo);
+          setCultivo(camposCultivo);
+        }
+      } catch (err) {
+        console.error("Error cargando cultivo:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarDatos();
+  }, [user?.uid]);
 
   // ── Cálculo central ───────────────────────────────────────────────────────
   const areaHa = (() => {
     const raw = parseFloat(form.hectareas) || 0;
-    if (unidad === "m2") return raw / 10000;
-    return raw;
+    return unidad === "m2" ? raw / 10000 : raw;
   })();
 
   const plantas = areaHa ? Math.floor(areaHa * 10000 / 6) : 0;
@@ -30,15 +62,45 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
   // ── Handlers ──────────────────────────────────────────────────────────────
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleSave = () => {
-    // Guardamos siempre en hectáreas para que el resto de la app sea consistente
-    setCultivo({ ...form, hectareas: areaHa ? String(areaHa) : "" });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSave = async () => {
+    if (!user?.uid) return;
+    setSaving(true);
+
+    const datosAGuardar = {
+      nombre:       form.nombre       ?? "",
+      hectareas:    areaHa ? String(areaHa) : "",
+      variedad:     form.variedad      ?? "",
+      fechaSiembra: form.fechaSiembra  ?? "",
+      region:       form.region        ?? "",
+      notas:        form.notas         ?? "",
+      uid:          user.uid,
+      actualizadoEn: new Date().toISOString(),
+    };
+
+    try {
+      // merge: true → no sobreescribe lotes ni calendarNotes del calendario
+      await setDoc(doc(db, "cultivos", user.uid), datosAGuardar, { merge: true });
+      setCultivo(datosAGuardar);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      console.error("Error guardando cultivo:", err);
+      alert("Error al guardar. Revisa tu conexión.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  // Etiqueta del campo según unidad seleccionada
-  const areaLabel = unidad === "ha" ? "Área a sembrar (hectáreas)" : "Área a sembrar (metros cuadrados)";
+  // ── Loading ───────────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-white/40 text-sm">Cargando datos de tu finca...</p>
+      </div>
+    );
+  }
+
+  const areaLabel       = unidad === "ha" ? "Área a sembrar (hectáreas)" : "Área a sembrar (metros cuadrados)";
   const areaPlaceholder = unidad === "ha" ? "Ej: 5.5" : "Ej: 55000";
 
   return (
@@ -54,7 +116,6 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
         <div className="stat-card rounded-xl p-5 space-y-4">
           <h3 className="font-serif text-white text-lg mb-1">Datos de la finca</h3>
 
-          {/* Nombre */}
           <div>
             <label className="field-label">Nombre de la finca</label>
             <input
@@ -63,11 +124,8 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
             />
           </div>
 
-          {/* Selector de unidad + campo área */}
           <div>
             <label className="field-label">{areaLabel}</label>
-
-            {/* Toggle ha / m² */}
             <div className="flex gap-2 mb-2">
               {["ha", "m2"].map(u => (
                 <button
@@ -84,9 +142,9 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
                 </button>
               ))}
             </div>
-
             <input
-              className="form-input" type="number" min="0.1" step={unidad === "ha" ? "0.1" : "100"}
+              className="form-input" type="number" min="0.1"
+              step={unidad === "ha" ? "0.1" : "100"}
               placeholder={areaPlaceholder}
               value={form.hectareas || ""}
               onChange={e => set("hectareas", e.target.value)}
@@ -96,7 +154,6 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
             </p>
           </div>
 
-          {/* Variedad — solo Híbrido y TCS */}
           <div>
             <label className="field-label">Variedad de cacao</label>
             <select
@@ -111,7 +168,6 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
             </select>
           </div>
 
-          {/* Fecha */}
           <div>
             <label className="field-label">Fecha estimada de siembra</label>
             <input
@@ -121,7 +177,6 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
             />
           </div>
 
-          {/* Región */}
           <div>
             <label className="field-label">Municipio del Catatumbo</label>
             <input
@@ -132,7 +187,6 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
             />
           </div>
 
-          {/* Notas */}
           <div>
             <label className="field-label">Notas adicionales</label>
             <textarea
@@ -146,10 +200,19 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
 
           <button
             onClick={handleSave}
+            disabled={saving}
             className="w-full py-2.5 rounded-lg text-sm font-bold transition-all"
-            style={{ background: saved ? "rgba(46,107,69,0.6)" : "#2E6B45", color: "white" }}
+            style={{
+              background: saved  ? "rgba(46,107,69,0.6)"
+                        : saving ? "rgba(46,107,69,0.4)"
+                        :          "#2E6B45",
+              color:  "white",
+              cursor: saving ? "not-allowed" : "pointer",
+            }}
           >
-            {saved ? "✓ Guardado correctamente" : "Guardar datos"}
+            {saved  ? "✓ Guardado correctamente"
+            : saving ? "Guardando..."
+            :          "Guardar datos"}
           </button>
         </div>
 
@@ -170,8 +233,6 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
               </div>
             ) : (
               <div className="space-y-4">
-
-                {/* Conversión visual */}
                 {unidad === "m2" && areaHa > 0 && (
                   <div
                     className="rounded-lg px-3 py-2 text-xs text-white/50 flex items-center justify-between"
@@ -183,7 +244,6 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
                   </div>
                 )}
 
-                {/* Resultado principal */}
                 <div
                   className="rounded-lg p-4"
                   style={{ background: "rgba(46,107,69,0.15)", border: "1px solid rgba(46,107,69,0.3)" }}
@@ -195,24 +255,19 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
                   </p>
                 </div>
 
-                {/* Hoyos / área */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { label: "Hoyos a preparar", val: plantas.toLocaleString() },
                     { label: "Área por planta",   val: "6 m²" },
                   ].map(d => (
-                    <div
-                      key={d.label}
-                      className="rounded-lg p-3 text-center"
-                      style={{ background: "rgba(255,255,255,0.04)" }}
-                    >
+                    <div key={d.label} className="rounded-lg p-3 text-center"
+                      style={{ background: "rgba(255,255,255,0.04)" }}>
                       <p className="text-white font-bold text-xl">{d.val}</p>
                       <p className="text-white/40 text-[10px] mt-0.5">{d.label}</p>
                     </div>
                   ))}
                 </div>
 
-                {/* Insumos */}
                 {insumos && (
                   <div>
                     <p className="text-white/40 text-xs uppercase tracking-wider mb-2">Insumos estimados</p>
@@ -222,8 +277,7 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
                         { label: "Fungicida preventivo", val: `${insumos.fungicida} L`,               ico: "💧" },
                         { label: "Agua primer mes",      val: `${insumos.agua.toLocaleString()} L`,   ico: "🚿" },
                       ].map(ins => (
-                        <div
-                          key={ins.label}
+                        <div key={ins.label}
                           className="flex items-center justify-between px-3 py-2 rounded-lg"
                           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
                         >
@@ -241,7 +295,6 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
             )}
           </div>
 
-          {/* Marco de plantación */}
           <div className="stat-card rounded-xl p-4">
             <p className="text-white/40 text-xs uppercase tracking-wider mb-3">Marco de plantación recomendado</p>
             <div className="grid grid-cols-3 gap-2 text-center">
@@ -250,11 +303,8 @@ export default function ViewCultivo({ cultivo, setCultivo }) {
                 { label: "Entre plantas", val: "2 m"  },
                 { label: "Área/planta",   val: "6 m²" },
               ].map(d => (
-                <div
-                  key={d.label}
-                  className="rounded-lg py-3 px-2"
-                  style={{ background: "rgba(255,255,255,0.04)" }}
-                >
+                <div key={d.label} className="rounded-lg py-3 px-2"
+                  style={{ background: "rgba(255,255,255,0.04)" }}>
                   <p className="text-[#CC9633] font-bold text-base">{d.val}</p>
                   <p className="text-white/35 text-[10px] mt-0.5 leading-tight">{d.label}</p>
                 </div>

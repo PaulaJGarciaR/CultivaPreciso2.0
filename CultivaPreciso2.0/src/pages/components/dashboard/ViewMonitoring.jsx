@@ -9,7 +9,7 @@ export default function ViewMonitoring() {
         sub="Sistema de sensores en tiempo real — disponible próximamente."
       />
       <div
-        className="stat-card rounded-xl p-12 flex flex-col items-center text-center"
+        className="stat-card rounded-xl p-12 flex flex-col items-center text-center "
         style={{ border: "1px dashed rgba(255,255,255,0.1)" }}
       >
         <div className="w-16 h-16 rounded-full bg-[#2E6B45]/10 flex items-center justify-center mb-4">
