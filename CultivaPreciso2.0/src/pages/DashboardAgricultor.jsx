@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-import ViewDashboard  from "./components/dashboard/ViewDashboard.jsx";
-import ViewCultivo    from "./components/dashboard/ViewCultivo";
-import ViewWeather    from "./components/dashboard/ViewWeather";
-import ViewAI         from "./components/dashboard/ViewAI";
+import ViewDashboard from "./components/dashboard/ViewDashboard.jsx";
+import ViewCultivo from "./components/dashboard/ViewCultivo";
+import ViewWeather from "./components/dashboard/ViewWeather";
+import ViewAI from "./components/dashboard/ViewAI";
 import ViewMonitoring from "./components/dashboard/ViewMonitoring";
-import ViewReports    from "./components/dashboard/ViewReports";
+import ViewReports from "./components/dashboard/ViewReports";
+import ViewCalendar from "./components/dashboard/ViewCalendar.jsx";
 
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase.js";
@@ -15,67 +16,137 @@ import { getFirestore, doc, getDoc } from "firebase/firestore";
 // ── Iconos inline (SVG) ──────────────────────────────────────────────────────
 const Icon = {
   Dashboard: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-      <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="w-5 h-5"
+    >
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
     </svg>
   ),
   Monitor: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="w-5 h-5"
+    >
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
     </svg>
   ),
   Cultivo: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-      <path d="M12 22V12M12 12C12 7 7 4 2 5c0 5 3 9 10 7M12 12c0-5 5-8 10-7 0 5-3 9-10 7"/>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="w-5 h-5"
+    >
+      <path d="M12 22V12M12 12C12 7 7 4 2 5c0 5 3 9 10 7M12 12c0-5 5-8 10-7 0 5-3 9-10 7" />
     </svg>
   ),
   Weather: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="w-5 h-5"
+    >
+      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
     </svg>
   ),
   AI: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="w-5 h-5"
+    >
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   ),
   Reports: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14,2 14,8 20,8"/>
-      <line x1="16" y1="13" x2="8" y2="13"/>
-      <line x1="16" y1="17" x2="8" y2="17"/>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="w-5 h-5"
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14,2 14,8 20,8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+    </svg>
+  ),
+  Calendario: () => (
+    <svg
+      class="w-6 h-6 "
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 10h16M8 14h8m-4-7V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"
+      />
     </svg>
   ),
   Menu: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-      <line x1="3" y1="6" x2="21" y2="6"/>
-      <line x1="3" y1="12" x2="21" y2="12"/>
-      <line x1="3" y1="18" x2="21" y2="18"/>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className="w-5 h-5"
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
     </svg>
   ),
   Logout: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-4 h-4">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-      <polyline points="16 17 21 12 16 7"/>
-      <line x1="21" y1="12" x2="9" y2="12"/>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="w-4 h-4"
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   ),
 };
 
 const NAV_ITEMS = [
-  { id: "dashboard",  label: "Inicio",        Icon: Icon.Dashboard },
-  { id: "cultivo",    label: "Mi Cultivo",    Icon: Icon.Cultivo   },
-  { id: "weather",    label: "Meteorología",  Icon: Icon.Weather   },
-  { id: "ai",         label: "IA", Icon: Icon.AI        },
-  { id: "monitoring", label: "Monitoreo",     Icon: Icon.Monitor   },
-  { id: "reports",    label: "Reportes",      Icon: Icon.Reports   },
+  { id: "dashboard", label: "Inicio", Icon: Icon.Dashboard },
+  { id: "cultivo", label: "Mi Cultivo", Icon: Icon.Cultivo },
+  { id: "weather", label: "Meteorología", Icon: Icon.Weather },
+  { id: "ai", label: "IA", Icon: Icon.AI },
+  { id: "monitoring", label: "Monitoreo", Icon: Icon.Monitor },
+  { id: "reports", label: "Reportes", Icon: Icon.Reports },
+  { id: "calendar", label: "Calendario", Icon: Icon.Calendario },
 ];
 
 export default function DashboardAgricultor({ user }) {
   const navigate = useNavigate();
-  const [activeNav, setActiveNav]     = useState("dashboard");
+  const [activeNav, setActiveNav] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // ── NUEVO: datos del usuario desde Firestore ──────────────────────────────
@@ -86,7 +157,7 @@ export default function DashboardAgricultor({ user }) {
     const fetchUser = async () => {
       if (!user?.uid) return;
       try {
-        const docRef  = doc(db, "users", user.uid);
+        const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setUserData(docSnap.data());
@@ -100,19 +171,25 @@ export default function DashboardAgricultor({ user }) {
   // ─────────────────────────────────────────────────────────────────────────
 
   const [cultivo, setCultivo] = useState({
-    nombre: "", hectareas: "", variedad: "",
-    fechaSiembra: "", region: "", notas: "",
+    nombre: "",
+    hectareas: "",
+    variedad: "",
+    fechaSiembra: "",
+    region: "",
+    notas: "",
   });
 
   useEffect(() => {
-  console.log("user:", user);
-  console.log("user.uid:", user?.uid);
-  console.log("userData:", userData);
-}, [user, userData]);
+    console.log("user:", user);
+    console.log("user.uid:", user?.uid);
+    console.log("userData:", userData);
+  }, [user, userData]);
   // ── Nombre a mostrar: primero Firestore, luego Firebase Auth, luego email ─
   const displayName = userData
     ? `${userData.firstName || ""} ${userData.lastName || ""}`.trim()
-    : user?.displayName?.split(" ")[0] || user?.email?.split("@")[0] || "Usuario";
+    : user?.displayName?.split(" ")[0] ||
+      user?.email?.split("@")[0] ||
+      "Usuario";
 
   // ── Iniciales del avatar ──────────────────────────────────────────────────
   const getInitials = () => {
@@ -123,7 +200,7 @@ export default function DashboardAgricultor({ user }) {
     return user.displayName
       .split(" ")
       .slice(0, 2)
-      .map(n => n[0])
+      .map((n) => n[0])
       .join("")
       .toUpperCase();
   };
@@ -131,17 +208,26 @@ export default function DashboardAgricultor({ user }) {
   // ── Render de la vista activa ─────────────────────────────────────────────
   const renderView = () => {
     switch (activeNav) {
-      case "dashboard":  return <ViewDashboard  cultivo={cultivo} onGoTo={setActiveNav} />;
-      case "cultivo":    return <ViewCultivo    cultivo={cultivo} setCultivo={setCultivo} />;
-      case "weather":    return <ViewWeather    cultivo={cultivo} />;
-      case "ai":         return <ViewAI         cultivo={cultivo} />;
-      case "monitoring": return <ViewMonitoring />;
-      case "reports":    return <ViewReports    cultivo={cultivo} />;
-      default:           return null;
+      case "dashboard":
+        return <ViewDashboard cultivo={cultivo} onGoTo={setActiveNav} />;
+      case "cultivo":
+        return <ViewCultivo cultivo={cultivo} setCultivo={setCultivo} user={user} />;
+      case "weather":
+        return <ViewWeather cultivo={cultivo} />;
+      case "ai":
+        return <ViewAI cultivo={cultivo} />;
+      case "monitoring":
+        return <ViewMonitoring />;
+      case "reports":
+        return <ViewReports cultivo={cultivo} />;
+      case "calendar":
+        return <ViewCalendar cultivo={cultivo} user={user}/>;
+      default:
+        return null;
     }
   };
 
-  const activeItem = NAV_ITEMS.find(n => n.id === activeNav);
+  const activeItem = NAV_ITEMS.find((n) => n.id === activeNav);
 
   // ── Cerrar sesión ─────────────────────────────────────────────────────────
   const handleLogout = async () => {
@@ -186,7 +272,10 @@ export default function DashboardAgricultor({ user }) {
       {/* ── SIDEBAR ── */}
       <aside
         className={`${sidebarOpen ? "w-56" : "w-16"} shrink-0 h-full flex flex-col transition-all duration-300`}
-        style={{ background: "#120C08", borderRight: "1px solid rgba(255,255,255,0.06)" }}
+        style={{
+          background: "#120C08",
+          borderRight: "1px solid rgba(255,255,255,0.06)",
+        }}
       >
         {/* Logo */}
         <div
@@ -194,8 +283,14 @@ export default function DashboardAgricultor({ user }) {
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
           <div className="w-8 h-8 rounded-lg bg-[#2E6B45] flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
-              <path d="M12 22V12M12 12C12 7 7 4 2 5c0 5 3 9 10 7M12 12c0-5 5-8 10-7 0 5-3 9-10 7"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              className="w-4 h-4"
+            >
+              <path d="M12 22V12M12 12C12 7 7 4 2 5c0 5 3 9 10 7M12 12c0-5 5-8 10-7 0 5-3 9-10 7" />
             </svg>
           </div>
           {sidebarOpen && (
@@ -214,14 +309,21 @@ export default function DashboardAgricultor({ user }) {
               className={`nav-item w-full flex items-center gap-3 px-4 py-2.5 text-left
                 ${activeNav === id ? "active" : "text-white/40 hover:text-white/70"}`}
             >
-              <span className="shrink-0"><NavIcon /></span>
-              {sidebarOpen && <span className="text-sm font-medium">{label}</span>}
+              <span className="shrink-0">
+                <NavIcon />
+              </span>
+              {sidebarOpen && (
+                <span className="text-sm font-medium">{label}</span>
+              )}
             </button>
           ))}
         </nav>
 
         {/* Usuario + logout */}
-        <div className="px-4 py-4 shrink-0" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div
+          className="px-4 py-4 shrink-0"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        >
           <div className="flex items-center gap-3">
             {user?.photoURL ? (
               <img
@@ -231,13 +333,19 @@ export default function DashboardAgricultor({ user }) {
               />
             ) : (
               <div className="w-8 h-8 rounded-full bg-[#CC9633]/20 flex items-center justify-center shrink-0">
-                <span className="text-[#CC9633] text-xs font-bold">{getInitials()}</span>
+                <span className="text-[#CC9633] text-xs font-bold">
+                  {getInitials()}
+                </span>
               </div>
             )}
             {sidebarOpen && (
               <div className="flex-1 overflow-hidden">
-                <p className="text-white text-xs font-semibold truncate">{displayName}</p>
-                <p className="text-white/40 text-xs truncate">{user?.email || "Plan Pro"}</p>
+                <p className="text-white text-xs font-semibold truncate">
+                  {displayName}
+                </p>
+                <p className="text-white/40 text-xs truncate">
+                  {userData?.email || user?.email || "Sin correo"}
+                </p>
               </div>
             )}
             {sidebarOpen && (
@@ -255,21 +363,25 @@ export default function DashboardAgricultor({ user }) {
 
       {/* ── CONTENIDO PRINCIPAL ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-
         {/* Topbar */}
         <header
           className="h-16 shrink-0 flex items-center justify-between px-6"
-          style={{ background: "#120C08", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          style={{
+            background: "#120C08",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+          }}
         >
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setSidebarOpen(v => !v)}
+              onClick={() => setSidebarOpen((v) => !v)}
               className="text-white/40 hover:text-white transition-colors"
             >
               <Icon.Menu />
             </button>
             <div>
-              <h1 className="font-serif text-white text-lg leading-none">{activeItem?.label}</h1>
+              <h1 className="font-serif text-white text-lg leading-none">
+                {activeItem?.label}
+              </h1>
               {cultivo.nombre && (
                 <p className="text-white/35 text-xs mt-0.5">{cultivo.nombre}</p>
               )}
@@ -278,15 +390,14 @@ export default function DashboardAgricultor({ user }) {
 
           <div className="flex items-center gap-3">
             <span className="text-white/40 text-xs hidden sm:inline">
-              Hola, <span className="text-white/70 font-semibold">{displayName}</span>
+              Hola,{" "}
+              <span className="text-white/70 font-semibold">{displayName}</span>
             </span>
           </div>
         </header>
 
         {/* Vista activa */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {renderView()}
-        </main>
+        <main className="flex-1 overflow-y-auto p-6">{renderView()}</main>
       </div>
     </div>
   );
