@@ -28,8 +28,8 @@ export default function ViewDashboard({ cultivo, onGoTo }) {
       desc: "El cacao joven requiere 60-70% de sombra. Instale sombrío de plátano en las primeras 18 semanas.",
     },
   ] : [];
-
   return (
+    
     <div className="space-y-5">
 
       {/* ── KPIs de siembra ── */}
