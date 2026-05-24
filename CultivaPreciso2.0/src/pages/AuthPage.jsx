@@ -17,7 +17,7 @@ import {
   sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, GoogleProvider } from "../firebase.js";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc,getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -294,30 +294,65 @@ export default function AuthPage() {
     }
   };
 
-  const handleGoogle = async () => {
-    setLoading(true);
-    clearMessages();
-    try {
-      await signInWithPopup(auth, GoogleProvider);
-      navigate("/dashboardAgricultor");
-    } catch (err) {
-      setGlobalError(translateError(err.code));
-    } finally {
-      setLoading(false);
-    }
-  };
+ const handleGoogle = async () => {
+  setLoading(true);
+  clearMessages();
+  try {
+    const result = await signInWithPopup(auth, GoogleProvider);
+    const user = result.user;
 
-  const handleForgotPassword = async () => {
-    touchLoginField("email");
-    if (loginErrors.email) return;
-    clearMessages();
-    try {
-      await sendPasswordResetEmail(auth, login.email);
-      setGlobalSuccess("✅ Correo de recuperación enviado. Revisa tu bandeja.");
-    } catch (err) {
-      setGlobalError(translateError(err.code));
+    const docRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      await setDoc(docRef, {
+        firstName: user.displayName?.split(" ")[0] || "",
+        lastName:  user.displayName?.split(" ").slice(1).join(" ") || "",
+        email:     user.email,
+        photoURL:  user.photoURL,
+        uid:       user.uid,
+        createdAt: serverTimestamp(),
+        provider:  "google",
+      });
     }
-  };
+    Swal.fire({
+        icon: "success",
+        title: "Bienvenido",
+        text: "Inicio de sesión exitoso",
+        timer: 1500,
+        showConfirmButton: false,
+        background: "#422D1A",
+        color: "#ffffff",
+      });
+
+    navigate("/dashboardAgricultor");
+  } catch (err) {
+    setGlobalError(translateError(err.code));
+  } finally {
+    setLoading(false);
+  }
+};
+
+ const handleForgotPassword = async () => {
+  touchLoginField("email");
+
+  if (!validators.email(login.email)) {
+    setGlobalError("Ingresa un correo válido para recuperar tu contraseña.");
+    return;
+  }
+
+  clearMessages();
+  setLoading(true); // ← también faltaba esto
+
+  try {
+    await sendPasswordResetEmail(auth, login.email);
+    setGlobalSuccess("Correo de recuperación enviado.");
+  } catch (err) {
+    setGlobalError(translateError(err.code));
+  } finally {
+    setLoading(false);
+  }
+};
 
   const home=()=>{
     navigate("/")
