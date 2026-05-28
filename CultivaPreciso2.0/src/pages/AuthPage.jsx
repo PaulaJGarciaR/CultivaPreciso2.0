@@ -22,6 +22,7 @@ import { db } from "../firebase.js";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
+
 // ── Helpers de validación ──
 const validators = {
   email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()),
@@ -61,6 +62,7 @@ const translateError = (code) => {
   };
   return errors[code] || "Ocurrió un error. Intenta de nuevo.";
 };
+
 
 function FieldWrapper({ label, error, touched, success, children }) {
   return (
@@ -177,6 +179,16 @@ export default function AuthPage() {
   const [globalSuccess, setGlobalSuccess] = useState("");
   const navigate = useNavigate();
 
+  const redirectByRole = async (uid) => {
+  const snap = await getDoc(doc(db, "users", uid));
+  const role = snap.data()?.role || "agricultor";
+  if (role === "admin") {
+    navigate("/dashboardAdmin");
+  } else {
+    navigate("/dashboardAgricultor");
+  }
+};
+
   // Login
   const [login, setLogin] = useState({ email: "", password: "" });
   const [loginTouched, setLoginTouched] = useState({});
@@ -232,7 +244,7 @@ export default function AuthPage() {
     setLoading(true);
     clearMessages();
     try {
-      await signInWithEmailAndPassword(auth, login.email, login.password);
+      const userCred = await signInWithEmailAndPassword(auth, login.email, login.password);
       Swal.fire({
         icon: "success",
         title: "Bienvenido",
@@ -242,7 +254,7 @@ export default function AuthPage() {
         background: "#422D1A",
         color: "#ffffff",
       });
-      navigate("/dashboardAgricultor");
+      await redirectByRole(userCred.user.uid);
     } catch (err) {
       setGlobalError(translateError(err.code));
     } finally {
@@ -267,6 +279,7 @@ export default function AuthPage() {
           lastName: reg.lastName,
           email: reg.email,
           uid: userCred.user.uid,
+          role: "agricultor",
           createdAt: serverTimestamp(),
         });
       } catch (firestoreErr) {
@@ -325,7 +338,7 @@ export default function AuthPage() {
         color: "#ffffff",
       });
 
-    navigate("/dashboardAgricultor");
+    await redirectByRole(result.user.uid);
   } catch (err) {
     setGlobalError(translateError(err.code));
   } finally {
