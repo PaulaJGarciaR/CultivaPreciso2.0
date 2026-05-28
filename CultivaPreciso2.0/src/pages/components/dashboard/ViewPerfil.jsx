@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getFirestore, doc, updateDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
 import { updateProfile, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { auth } from "../../../firebase.js";
 import { useNavigate } from "react-router-dom";
@@ -69,12 +69,34 @@ export default function ViewPerfil({ user, userData, setUserData }) {
   const [firstName,  setFirstName]  = useState(userData?.firstName || "");
   const [lastName,   setLastName]   = useState(userData?.lastName  || "");
   const [savingInfo, setSavingInfo] = useState(false);
+  const [cultivoPerfil, setCultivoPerfil] = useState(null);
+  const [loadingCultivo, setLoadingCultivo] = useState(true);
 
   const [deletePass,     setDeletePass]     = useState("");
   const [showDeletePass, setShowDeletePass] = useState(false);
   const [deleting,       setDeleting]       = useState(false);
 
   const isGoogle = user?.providerData?.[0]?.providerId === "google.com";
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setLoadingCultivo(false);
+      return;
+    }
+
+    const cargarCultivo = async () => {
+      try {
+        const snap = await getDoc(doc(db, "cultivos", user.uid));
+        setCultivoPerfil(snap.exists() ? snap.data() : null);
+      } catch (e) {
+        console.error("Error cargando cultivo en perfil:", e);
+      } finally {
+        setLoadingCultivo(false);
+      }
+    };
+
+    cargarCultivo();
+  }, [user?.uid]);
 
   const handleSaveInfo = async () => {
     if (!validators.name(firstName) || !validators.name(lastName)) {
@@ -212,6 +234,36 @@ export default function ViewPerfil({ user, userData, setUserData }) {
           <Save size={15} />
           {savingInfo ? "Guardando..." : "Guardar cambios"}
         </button>
+      </SectionCard>
+
+      <SectionCard title="Mi cultivo guardado" icon={<span className="text-base">🌱</span>}>
+        {loadingCultivo ? (
+          <p className="text-[#2F281F]/50 text-sm">Cargando datos del cultivo...</p>
+        ) : cultivoPerfil ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { label: "Nombre", value: cultivoPerfil.nombre || "Sin registrar" },
+              { label: "Área", value: cultivoPerfil.hectareas ? `${cultivoPerfil.hectareas} ha` : "Sin registrar" },
+              { label: "Variedad", value: cultivoPerfil.variedad || "Sin registrar" },
+              { label: "Siembra", value: cultivoPerfil.fechaSiembra || "Sin registrar" },
+              { label: "Región", value: cultivoPerfil.region || "Sin registrar" },
+              { label: "Última actualización", value: cultivoPerfil.actualizadoEn ? new Date(cultivoPerfil.actualizadoEn).toLocaleString("es-CO") : "Sin registrar" },
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl px-4 py-3" style={{ background: "rgba(46,107,69,0.05)", border: "1px solid rgba(46,107,69,0.12)" }}>
+                <p className="text-[#2F281F]/45 text-[10px] uppercase tracking-widest">{item.label}</p>
+                <p className="text-[#2F281F] text-sm font-semibold mt-1">{item.value}</p>
+              </div>
+            ))}
+            {cultivoPerfil.notas && (
+              <div className="sm:col-span-2 rounded-xl px-4 py-3" style={{ background: "rgba(46,107,69,0.05)", border: "1px solid rgba(46,107,69,0.12)" }}>
+                <p className="text-[#2F281F]/45 text-[10px] uppercase tracking-widest">Notas</p>
+                <p className="text-[#2F281F]/75 text-sm mt-1">{cultivoPerfil.notas}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-[#2F281F]/50 text-sm">Aún no hay datos de cultivo guardados. Completa la pestaña Mi Cultivo y se guardará automáticamente.</p>
+        )}
       </SectionCard>
 
       {/* Zona de peligro */}

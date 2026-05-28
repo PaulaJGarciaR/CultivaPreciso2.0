@@ -10,12 +10,13 @@ import ViewMonitoring from "./components/dashboard/ViewMonitoring";
 import ViewReports from "./components/dashboard/ViewReports";
 import ViewCalendar from "./components/dashboard/ViewCalendar.jsx";
 import ViewPerfil from "./components/dashboard/ViewPerfil.jsx";
+import ViewNoticias from "./components/dashboard/ViewNoticias.jsx";
 
 // ── Nuevas vistas de Fitosanidad ──────────────────────────────────────────────
 import ViewEnfermedades from "./components/dashboard/ViewEnfermedades.jsx";
 import ChatEnfermedadesFlotante from "./components/dashboard/Viewchatenfermedades.jsx";
 import ChatGeneralFlotante from "./components/dashboard/Viewchatgeneral.jsx";
-import ViewCalculadoraSensores from "./components/dashboard/ViewCalculadoraSensores.jsx";
+import logoCultivaPreciso from "../assets/cultiva-preciso-logo.svg";
 
 // ── Firebase ──────────────────────────────────────────────────────────────────
 import { signOut } from "firebase/auth";
@@ -173,6 +174,18 @@ const Icon = {
       <circle cx="12" cy="7" r="4" />
     </svg>
   ),
+  News: () => (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="w-5 h-5"
+    >
+      <path d="M4 5h13a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3V5Z" />
+      <path d="M8 9h6M8 13h8M8 17h5" />
+    </svg>
+  ),
 };
 
 // ── Grupos de navegación ──────────────────────────────────────────────────────
@@ -181,7 +194,7 @@ const NAV_PRINCIPAL = [
   { id: "cultivo", label: "Mi Cultivo", Icon: Icon.Cultivo },
   { id: "weather", label: "Meteorología", Icon: Icon.Weather },
   { id: "monitoring", label: "Monitoreo", Icon: Icon.Monitor },
-  { id: "sensores", label: "Sensores", Icon: Icon.Sensor },
+  { id: "noticias", label: "Información", Icon: Icon.News },
   { id: "reports", label: "Reportes", Icon: Icon.Reports },
   { id: "calendar", label: "Calendario", Icon: Icon.Calendario },
   { id: "enfermedades", label: "Enfermedades", Icon: Icon.Enfermedad },
@@ -192,6 +205,8 @@ export default function DashboardAgricultor({ user }) {
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [theme, setTheme] = useState(() => localStorage.getItem("cultiva_theme") || "dark");
+  const isLightTheme = theme === "light";
 
   const db = getFirestore();
   const [userData, setUserData] = useState(null);
@@ -217,6 +232,10 @@ export default function DashboardAgricultor({ user }) {
     region: "",
     notas: "",
   });
+
+  useEffect(() => {
+    localStorage.setItem("cultiva_theme", theme);
+  }, [theme]);
 
   // ── Nombre / iniciales ────────────────────────────────────────────────────
   const displayName = userData
@@ -250,8 +269,8 @@ export default function DashboardAgricultor({ user }) {
         return <ViewWeather cultivo={cultivo} />;
       case "monitoring":
         return <ViewMonitoring />;
-      case "sensores":
-        return <ViewCalculadoraSensores />;
+      case "noticias":
+        return <ViewNoticias />;
       case "reports":
         return <ViewReports cultivo={cultivo} />;
       case "calendar":
@@ -305,6 +324,8 @@ export default function DashboardAgricultor({ user }) {
               ? fito
                 ? "nav-item-fito active"
                 : "active"
+              : isLightTheme
+              ? "text-[#2F281F]/55 hover:text-[#2E6B45]"
               : "text-white/40 hover:text-white/70"
           }`}
       >
@@ -318,30 +339,83 @@ export default function DashboardAgricultor({ user }) {
 
   return (
     <div
-      className="flex h-screen w-full overflow-hidden"
-      style={{ fontFamily: "'Lato',sans-serif", background: "#1A110D" }}
+      className={`flex h-screen w-full overflow-hidden theme-${theme}`}
+      style={{ fontFamily: "'Lato',sans-serif", background: isLightTheme ? "#F7F5EC" : "#1A110D" }}
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Lato:wght@300;400;700&display=swap');
         .font-serif { font-family:'Playfair Display',serif !important; }
         ::-webkit-scrollbar       { width:4px; }
         ::-webkit-scrollbar-track { background:transparent; }
-        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:4px; }
+        ::-webkit-scrollbar-thumb { background:${isLightTheme ? "rgba(46,107,69,0.18)" : "rgba(255,255,255,0.1)"}; border-radius:4px; }
         .nav-item { transition:background .2s,color .2s; border-left:2px solid transparent; }
-        .nav-item:hover { background:rgba(255,255,255,0.05); }
-        .nav-item.active { background:rgba(46,107,69,0.2); border-left-color:#2E6B45; color:#4CAF7D; }
+        .theme-light .nav-item:hover { background:rgba(46,107,69,0.08); }
+        .theme-dark .nav-item:hover { background:rgba(255,255,255,0.05); }
+        .theme-light .nav-item.active { background:rgba(46,107,69,0.12); border-left-color:#2E6B45; color:#2E6B45; }
+        .theme-dark .nav-item.active { background:rgba(46,107,69,0.2); border-left-color:#2E6B45; color:#4CAF7D; }
         .nav-item-fito.active { background:rgba(204,150,51,0.14); border-left-color:#CC9633; color:#CC9633; }
         .form-input {
           width:100%; padding:.55rem .85rem; border-radius:8px; font-size:.875rem;
-          background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
-          color:white; outline:none; transition:border-color .2s; font-family:'Lato',sans-serif;
+          background:${isLightTheme ? "#ffffff" : "rgba(255,255,255,0.05)"};
+          border:1px solid ${isLightTheme ? "rgba(46,107,69,0.16)" : "rgba(255,255,255,0.1)"};
+          color:${isLightTheme ? "#2F281F" : "white"}; outline:none; transition:border-color .2s; font-family:'Lato',sans-serif;
         }
-        .form-input::placeholder { color:rgba(255,255,255,0.25); }
+        .form-input::placeholder { color:${isLightTheme ? "rgba(47,40,31,0.35)" : "rgba(255,255,255,0.25)"}; }
         .form-input:focus        { border-color:rgba(46,107,69,0.6); }
-        .form-input option       { background:#1A110D; color:white; }
+        .form-input option       { background:${isLightTheme ? "#ffffff" : "#1A110D"}; color:${isLightTheme ? "#2F281F" : "white"}; }
         .field-label {
-          display:block; color:rgba(255,255,255,0.4); font-size:0.65rem;
+          display:block; color:${isLightTheme ? "rgba(47,40,31,0.58)" : "rgba(255,255,255,0.4)"}; font-size:0.65rem;
           text-transform:uppercase; letter-spacing:.1em; margin-bottom:.375rem;
+        }
+        .theme-light .stat-card {
+          background:#FFFFFF;
+          border:1px solid rgba(46,107,69,0.12);
+          box-shadow:0 12px 28px rgba(47,40,31,0.06);
+        }
+        .theme-dark .stat-card {
+          background:rgba(255,255,255,0.03);
+          border:1px solid rgba(255,255,255,0.07);
+        }
+        .theme-light .stat-card .text-white { color:#2F281F !important; }
+        .theme-light .stat-card .text-white\\/70 { color:rgba(47,40,31,0.72) !important; }
+        .theme-light .stat-card .text-white\\/60 { color:rgba(47,40,31,0.62) !important; }
+        .theme-light .stat-card .text-white\\/50 { color:rgba(47,40,31,0.54) !important; }
+        .theme-light .stat-card .text-white\\/40 { color:rgba(47,40,31,0.48) !important; }
+        .theme-light .stat-card .text-white\\/35 { color:rgba(47,40,31,0.42) !important; }
+        .theme-light .stat-card .text-white\\/30 { color:rgba(47,40,31,0.36) !important; }
+        .theme-light .stat-card .text-white\\/25 { color:rgba(47,40,31,0.32) !important; }
+        .theme-light .stat-card .text-white\\/20 { color:rgba(47,40,31,0.28) !important; }
+        .theme-light .stat-card .bg-white\\/5,
+        .theme-light .stat-card .bg-white\\/4,
+        .theme-light .stat-card .bg-white\\/3 {
+          background:rgba(46,107,69,0.05) !important;
+        }
+        .theme-light main .text-white { color:#1F3D2B !important; }
+        .theme-light main .text-white\\/70 { color:rgba(31,61,43,0.76) !important; }
+        .theme-light main .text-white\\/60 { color:rgba(31,61,43,0.66) !important; }
+        .theme-light main .text-white\\/50 { color:rgba(31,61,43,0.56) !important; }
+        .theme-light main .text-white\\/40 { color:rgba(31,61,43,0.50) !important; }
+        .theme-light main .text-white\\/35 { color:rgba(31,61,43,0.44) !important; }
+        .theme-light main .text-white\\/30 { color:rgba(31,61,43,0.38) !important; }
+        .theme-light main .text-white\\/25 { color:rgba(31,61,43,0.34) !important; }
+        .theme-light main .text-white\\/20 { color:rgba(31,61,43,0.30) !important; }
+        .theme-light main .font-serif.text-white,
+        .theme-light main h1,
+        .theme-light main h2,
+        .theme-light main h3 {
+          color:#1F5A37 !important;
+        }
+        .theme-light main [style*="rgba(255,255,255,0.03)"],
+        .theme-light main [style*="rgba(255,255,255,0.04)"],
+        .theme-light main [style*="rgba(255,255,255,0.05)"] {
+          background-color:rgba(46,107,69,0.05) !important;
+        }
+        .theme-light main [style*="rgba(255,255,255,0.06)"],
+        .theme-light main [style*="rgba(255,255,255,0.07)"],
+        .theme-light main [style*="rgba(255,255,255,0.08)"],
+        .theme-light main [style*="rgba(255,255,255,0.09)"],
+        .theme-light main [style*="rgba(255,255,255,0.1)"] {
+          border-color:rgba(46,107,69,0.14) !important;
         }
       `}</style>
 
@@ -349,29 +423,19 @@ export default function DashboardAgricultor({ user }) {
       <aside
         className={`${sidebarOpen ? "w-56" : "w-16"} shrink-0 h-full flex flex-col transition-all duration-300`}
         style={{
-          background: "#120C08",
-          borderRight: "1px solid rgba(255,255,255,0.06)",
+          background: isLightTheme ? "#FFFFFF" : "#120C08",
+          borderRight: isLightTheme ? "1px solid rgba(46,107,69,0.12)" : "1px solid rgba(255,255,255,0.06)",
         }}
       >
         {/* Logo */}
         <div
           className="flex items-center gap-3 px-4 h-16 shrink-0"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderBottom: isLightTheme ? "1px solid rgba(46,107,69,0.12)" : "1px solid rgba(255,255,255,0.06)" }}
         >
-          <div className="w-8 h-8 rounded-lg bg-[#2E6B45] flex items-center justify-center shrink-0">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              className="w-4 h-4"
-            >
-              <path d="M12 22V12M12 12C12 7 7 4 2 5c0 5 3 9 10 7M12 12c0-5 5-8 10-7 0 5-3 9-10 7" />
-            </svg>
-          </div>
+          <img src={logoCultivaPreciso} alt="CultivaPreciso" className="w-10 h-10 rounded-full shrink-0 object-contain" />
           {sidebarOpen && (
-            <span className="font-serif text-white text-base leading-tight">
-              Cultiva<span className="text-[#CC9633]">Preciso</span>
+            <span className={`font-serif ${isLightTheme ? "text-[#1F3D2B]" : "text-white"} text-base leading-tight`}>
+              Cultiva<span className={isLightTheme ? "text-[#2E6B45]" : "text-[#CC9633]"}>Preciso</span>
             </span>
           )}
         </div>
@@ -386,7 +450,7 @@ export default function DashboardAgricultor({ user }) {
         {/* Usuario + logout */}
         <div
           className="px-4 py-4 shrink-0"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderTop: isLightTheme ? "1px solid rgba(46,107,69,0.12)" : "1px solid rgba(255,255,255,0.06)" }}
         >
           <div className="flex items-center gap-3">
             {user?.photoURL ? (
@@ -404,10 +468,10 @@ export default function DashboardAgricultor({ user }) {
             )}
             {sidebarOpen && (
               <div className="flex-1 overflow-hidden">
-                <p className="text-white text-xs font-semibold truncate">
+                <p className={`${isLightTheme ? "text-[#2F281F]" : "text-white"} text-xs font-semibold truncate`}>
                   {displayName}
                 </p>
-                <p className="text-white/40 text-xs truncate">
+                <p className={`${isLightTheme ? "text-[#2F281F]/50" : "text-white/40"} text-xs truncate`}>
                   {userData?.email || user?.email || "Sin correo"}
                 </p>
               </div>
@@ -415,7 +479,7 @@ export default function DashboardAgricultor({ user }) {
             {sidebarOpen && (
               <button
                 onClick={handleLogout}
-                className="text-white/30 hover:text-red-400 transition-colors shrink-0"
+                className={`${isLightTheme ? "text-[#2F281F]/35 hover:text-red-500" : "text-white/30 hover:text-red-400"} transition-colors shrink-0`}
                 title="Cerrar sesión"
               >
                 <Icon.Logout />
@@ -431,23 +495,23 @@ export default function DashboardAgricultor({ user }) {
         <header
           className="h-16 shrink-0 flex items-center justify-between px-6"
           style={{
-            background: "#120C08",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: isLightTheme ? "#FFFFFF" : "#120C08",
+            borderBottom: isLightTheme ? "1px solid rgba(46,107,69,0.12)" : "1px solid rgba(255,255,255,0.06)",
           }}
         >
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen((v) => !v)}
-              className="text-white/40 hover:text-white transition-colors"
+              className={`${isLightTheme ? "text-[#2F281F]/50 hover:text-[#2E6B45]" : "text-white/40 hover:text-white"} transition-colors`}
             >
               <Icon.Menu />
             </button>
             <div>
-              <h1 className="font-serif text-white text-lg leading-none">
+              <h1 className={`font-serif ${isLightTheme ? "text-[#2F281F]" : "text-white"} text-lg leading-none`}>
                 {activeItem?.label}
               </h1>
               {cultivo.nombre && (
-                <p className="text-white/35 text-xs mt-0.5">{cultivo.nombre}</p>
+                <p className={`${isLightTheme ? "text-[#2F281F]/45" : "text-white/35"} text-xs mt-0.5`}>{cultivo.nombre}</p>
               )}
             </div>
           </div>
@@ -465,9 +529,21 @@ export default function DashboardAgricultor({ user }) {
                 Fitosanidad
               </span>
             )}
-            <span className="text-white/40 text-xs hidden sm:inline">
+            <button
+              onClick={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+              className="text-xs px-3 py-1.5 rounded-full font-semibold transition-colors"
+              style={{
+                background: isLightTheme ? "rgba(46,107,69,0.08)" : "rgba(255,255,255,0.06)",
+                border: isLightTheme ? "1px solid rgba(46,107,69,0.16)" : "1px solid rgba(255,255,255,0.1)",
+                color: isLightTheme ? "#2E6B45" : "rgba(255,255,255,0.72)",
+              }}
+              title="Cambiar tema"
+            >
+              {isLightTheme ? "Tema claro" : "Tema oscuro"}
+            </button>
+            <span className={`${isLightTheme ? "text-[#2F281F]/50" : "text-white/40"} text-xs hidden sm:inline`}>
               Hola,{" "}
-              <span className="text-white/70 font-semibold">{displayName}</span>
+              <span className={`${isLightTheme ? "text-[#2F281F]/80" : "text-white/70"} font-semibold`}>{displayName}</span>
             </span>
           </div>
         </header>

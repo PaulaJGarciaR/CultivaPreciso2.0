@@ -1,6 +1,6 @@
 // src/components/dashboard/ViewCultivo.jsx
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { SectionHeader } from "./shared";
@@ -13,6 +13,7 @@ export default function ViewCultivo({ cultivo, setCultivo, user }) {
   const [saving,  setSaving]  = useState(false);   // ← faltaba
   const [loading, setLoading] = useState(true);    // ← faltaba
   const [unidad,  setUnidad]  = useState("ha");
+  const loadedRef = useRef(false);
 
   // ── Cargar datos desde Firestore ─────────────────────────────────────────
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function ViewCultivo({ cultivo, setCultivo, user }) {
         console.error("Error cargando cultivo:", err);
       } finally {
         setLoading(false);
+        loadedRef.current = true;
       }
     };
 
@@ -61,6 +63,36 @@ export default function ViewCultivo({ cultivo, setCultivo, user }) {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (!user?.uid || loading || !loadedRef.current) return;
+    const areaNum = parseFloat(form.hectareas) || 0;
+    const areaGuardada = unidad === "m2" && areaNum ? String(areaNum / 10000) : form.hectareas ?? "";
+    const datosAGuardar = {
+      nombre:       form.nombre       ?? "",
+      hectareas:    areaGuardada,
+      variedad:     form.variedad      ?? "",
+      fechaSiembra: form.fechaSiembra  ?? "",
+      region:       form.region        ?? "",
+      notas:        form.notas         ?? "",
+      uid:          user.uid,
+      actualizadoEn: new Date().toISOString(),
+    };
+    setSaving(true);
+    const timeout = setTimeout(async () => {
+      try {
+        await setDoc(doc(db, "cultivos", user.uid), datosAGuardar, { merge: true });
+        setCultivo(datosAGuardar);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 1800);
+      } catch (err) {
+        console.error("Error guardando cultivo:", err);
+      } finally {
+        setSaving(false);
+      }
+    }, 900);
+    return () => clearTimeout(timeout);
+  }, [form, unidad, user?.uid, loading, setCultivo]);
 
   const handleSave = async () => {
     if (!user?.uid) return;
@@ -210,9 +242,9 @@ export default function ViewCultivo({ cultivo, setCultivo, user }) {
               cursor: saving ? "not-allowed" : "pointer",
             }}
           >
-            {saved  ? "✓ Guardado correctamente"
-            : saving ? "Guardando..."
-            :          "Guardar datos"}
+            {saved  ? "✓ Guardado automáticamente"
+            : saving ? "Guardando automáticamente..."
+            :          "Guardado automático activo"}
           </button>
         </div>
 
