@@ -34,22 +34,15 @@ function TypingDots() {
 
 function Bubble({ msg }) {
   const isUser = msg.role === "user";
-  
-  // Función para formatear el texto eliminando markdown
-  const formatText = (text) => {
-    if (!text) return "";
-    let formatted = text;
-    // Eliminar asteriscos de negrita
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '$1');
-    formatted = formatted.replace(/\*(.*?)\*/g, '$1');
-    // Eliminar guiones de listas y reemplazar con viñetas normales
-    formatted = formatted.replace(/^-\s/gm, '• ');
-    // Eliminar múltiples espacios en blanco
-    formatted = formatted.replace(/\s+/g, ' ');
-    // Eliminar saltos de línea excesivos
-    formatted = formatted.replace(/\n{3,}/g, '\n\n');
-    return formatted;
-  };
+  const formatBlocks = (text) =>
+    (text || "")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/^\s*-\s/gm, "• ")
+      .replace(/\n{3,}/g, "\n\n")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
 
   return (
     <div className={`flex items-end gap-2 mb-3 ${isUser ? "flex-row-reverse" : ""}`}>
@@ -100,7 +93,13 @@ function Bubble({ msg }) {
                   }
             }
           >
-            {formatText(msg.text)}
+            <div className="space-y-2">
+              {formatBlocks(msg.text).map((line, index) => (
+                <p key={index} className={line.startsWith("•") ? "pl-2" : ""}>
+                  {line}
+                </p>
+              ))}
+            </div>
           </div>
         )}
         <span className="text-xs px-0.5" style={{ color: "rgba(255,255,255,0.18)" }}>
@@ -169,14 +168,16 @@ export default function ChatEnfermedadesFlotante() {
         import.meta.env.VITE_GEMINI_API_KEY_2,
         import.meta.env.VITE_GEMINI_API_KEY_3,
         import.meta.env.VITE_GEMINI_API_KEY_4,
+        import.meta.env.VITE_GEMINI_API_KEY_5,
+        import.meta.env.VITE_GEMINI_API_KEY_6,
       ].filter(Boolean);
       
       if (apiKeys.length === 0) {
         throw new Error("API key no configurada. Por favor configura VITE_GEMINI_API_KEY en tu archivo .env");
       }
       
-      // Usar la primera API key disponible (puedes implementar rotación más compleja si lo necesitas)
-      const apiKey = apiKeys[0];
+      let data = null;
+      let lastError = null;
 
       const userContent = [];
       if (imgSnap) {
@@ -223,44 +224,67 @@ Responde cortésmente: "Lo siento, solo puedo responder preguntas relacionadas c
 REGLAS DE RESPUESTA:
 - Responde en español
 - Sé MUY conciso (máximo 150 palabras)
+- Separa la respuesta en bloques cortos con saltos de línea
 - NO uses asteriscos ni formato markdown (*, **, -, etc.)
 - Usa viñetas normales con el símbolo •
 - Sé específico con los nombres de las enfermedades
 - Estructura clara: enfermedad -> por qué -> recomendaciones
 - El disclaimer SIEMPRE va al inicio`;
 
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: userContent,
-              },
-            ],
-            systemInstruction: {
-              parts: [{ text: systemPrompt }],
-            },
-            generationConfig: {
-              maxOutputTokens: 1000,
-              temperature: 0.7,
-            },
-          }),
-        }
-      );
+      for (const apiKey of apiKeys) {
+        try {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    role: "user",
+                    parts: userContent,
+                  },
+                ],
+                systemInstruction: {
+                  parts: [{ text: systemPrompt }],
+                },
+                generationConfig: {
+                  maxOutputTokens: 700,
+                  temperature: 0.35,
+                  topP: 0.8,
+                },
+              }),
+            }
+          );
 
-      const data = await res.json();
+          const parsed = await res.json().catch(() => ({}));
+          if (!res.ok || parsed.error) {
+            throw new Error(parsed.error?.message || `Error HTTP ${res.status}`);
+          }
+          data = parsed;
+          break;
+        } catch (e) {
+          lastError = e;
+        }
+      }
+      
+      if (!data) {
+        throw lastError || new Error("No se pudo obtener respuesta de la IA");
+      }
       
       if (data.error) {
         throw new Error(data.error.message || "Error en la API de Gemini");
       }
 
-      const aiText =
-        data.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "No pude procesar la imagen. Intenta con otra foto más clara.";
+      const aiText = data.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text)
+        .filter(Boolean)
+        .join("\n")
+        ?.trim();
+
+      if (!aiText) {
+        throw new Error("No pude procesar la imagen. Intenta con otra foto más clara, enfocada y con buena iluminación.");
+      }
 
       setMessages((p) => [
         ...p,
@@ -272,7 +296,7 @@ REGLAS DE RESPUESTA:
         ...p,
         { 
           role: "assistant", 
-          text: `Error: ${error.message || "Error al conectar con la IA. Por favor, intenta de nuevo."}`, 
+          text: `No pude completar el análisis. ${error.message || "Intenta de nuevo con una imagen más clara o una descripción de los síntomas."}`, 
           time: now() 
         },
       ]);

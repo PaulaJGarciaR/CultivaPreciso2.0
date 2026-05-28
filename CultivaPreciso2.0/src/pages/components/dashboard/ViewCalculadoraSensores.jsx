@@ -31,11 +31,20 @@ export default function ViewCalculadoraSensores() {
     const p = parseFloat(sensorData.fosforo);
     const k = parseFloat(sensorData.potasio);
 
+    if ([humedad, ph, temp, nivelAgua, conductividad, n, p, k].some(Number.isNaN)) {
+      setResult({
+        apto: false,
+        estado: "Datos incompletos",
+        recomendaciones: ["Completa todos los campos de la calculadora para generar un análisis confiable."],
+        puntuacion: 0,
+      });
+      return;
+    }
+
     let apto = true;
     let recomendaciones = [];
     let estado = "Óptimo";
 
-    // Análisis de humedad del suelo (ideal: 40-70%)
     if (humedad < 40) {
       apto = false;
       estado = "Necesita agua";
@@ -46,7 +55,6 @@ export default function ViewCalculadoraSensores() {
       recomendaciones.push("El suelo está muy húmedo. Reduce el riego y mejora el drenaje.");
     }
 
-    // Análisis de pH (ideal: 5.5-6.5 para cacao)
     if (ph < 5.5) {
       apto = false;
       if (estado === "Óptimo") estado = "Ácido";
@@ -57,7 +65,6 @@ export default function ViewCalculadoraSensores() {
       recomendaciones.push("El suelo es muy alcalino. Aplica azufre o materia orgánica.");
     }
 
-    // Análisis de temperatura (ideal: 20-30°C para cacao)
     if (temp < 20) {
       apto = false;
       if (estado === "Óptimo") estado = "Frío";
@@ -68,7 +75,6 @@ export default function ViewCalculadoraSensores() {
       recomendaciones.push("La temperatura es alta. Aumenta sombrío y riego.");
     }
 
-    // Análisis de nivel de agua (ideal: 50-80%)
     if (nivelAgua < 50) {
       apto = false;
       if (estado === "Óptimo") estado = "Bajo nivel de agua";
@@ -79,23 +85,15 @@ export default function ViewCalculadoraSensores() {
       recomendaciones.push("Nivel de agua muy alto. Mejora el drenaje.");
     }
 
-    // Análisis de conductividad (ideal: < 2 dS/m)
     if (conductividad > 2) {
       apto = false;
       if (estado === "Óptimo") estado = "Salino";
       recomendaciones.push("Alta salinidad. Aplica lavado de suelo con agua de buena calidad.");
     }
 
-    // Análisis de nutrientes
-    if (n < 20) {
-      recomendaciones.push("Bajo nivel de nitrógeno. Aplica fertilizante nitrogenado.");
-    }
-    if (p < 15) {
-      recomendaciones.push("Bajo nivel de fósforo. Aplica fertilizante fosfatado.");
-    }
-    if (k < 15) {
-      recomendaciones.push("Bajo nivel de potasio. Aplica fertilizante potásico.");
-    }
+    if (n < 20) recomendaciones.push("Bajo nivel de nitrógeno. Aplica fertilizante nitrogenado.");
+    if (p < 15) recomendaciones.push("Bajo nivel de fósforo. Aplica fertilizante fosfatado.");
+    if (k < 15) recomendaciones.push("Bajo nivel de potasio. Aplica fertilizante potásico.");
 
     setResult({
       apto,
@@ -107,8 +105,6 @@ export default function ViewCalculadoraSensores() {
 
   const calcularPuntuacion = (humedad, ph, temp, nivelAgua, conductividad, n, p, k) => {
     let score = 100;
-    
-    // Penalizaciones
     if (humedad < 40 || humedad > 70) score -= 15;
     if (ph < 5.5 || ph > 6.5) score -= 15;
     if (temp < 20 || temp > 30) score -= 10;
@@ -117,7 +113,6 @@ export default function ViewCalculadoraSensores() {
     if (n < 20) score -= 10;
     if (p < 15) score -= 10;
     if (k < 15) score -= 10;
-
     return Math.max(0, score);
   };
 
@@ -135,214 +130,229 @@ export default function ViewCalculadoraSensores() {
     setResult(null);
   };
 
+  // ── Tokens de color ──────────────────────────────────────────────
+  const green = {
+    bg: "#EAF3DE",
+    border: "#C0DD97",
+    text: "#3B6D11",
+    darkText: "#27500A",
+  };
+  const amber = {
+    bg: "#FAEEDA",
+    border: "#FAC775",
+    text: "#854F0B",
+  };
+
+  const isOk = result?.apto && result?.puntuacion >= 70;
+  const scoreOk = result?.puntuacion >= 70;
+
   return (
-    <div className="space-y-5 max-w-4xl">
-      <div className="stat-card rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-[#2E6B45]/15 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#4CAF7D" strokeWidth="2" className="w-5 h-5">
+    <div className="space-y-4">
+      {/* ── Tarjeta de entrada ── */}
+      <div
+        style={{
+          background: "#ffffff",
+          border: "0.5px solid #e2e8e0",
+          borderRadius: 12,
+          padding: "1.25rem",
+        }}
+      >
+        {/* Encabezado */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: "1.25rem" }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 10,
+              background: green.bg,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke={green.text} strokeWidth="2" style={{ width: 20, height: 20 }}>
               <path d="M12 22V12M12 12C12 7 7 4 2 5c0 5 3 9 10 7M12 12c0-5 5-8 10-7 0 5-3 9-10 7" />
             </svg>
           </div>
           <div>
-            <h2 className="font-serif text-white text-xl">Calculadora de Sensores</h2>
-            <p className="text-white/40 text-xs">Analiza los datos de tus sensores para evaluar el estado del suelo</p>
+            <p style={{ margin: 0, fontWeight: 500, fontSize: 16, color: "#111" }}>
+              Panel de lectura manual
+            </p>
+            <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
+              Registra cada variable y calcula una estimación del estado del suelo
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div>
-            <label className="field-label">Humedad del Suelo (%)</label>
-            <input
-              type="number"
-              name="humedadSuelo"
-              value={sensorData.humedadSuelo}
-              onChange={handleChange}
-              placeholder="40-70"
-              className="form-input"
-              min="0"
-              max="100"
-            />
-          </div>
-          <div>
-            <label className="field-label">pH del Suelo</label>
-            <input
-              type="number"
-              name="ph"
-              value={sensorData.ph}
-              onChange={handleChange}
-              placeholder="5.5-6.5"
-              className="form-input"
-              min="0"
-              max="14"
-              step="0.1"
-            />
-          </div>
-          <div>
-            <label className="field-label">Temperatura (°C)</label>
-            <input
-              type="number"
-              name="temperatura"
-              value={sensorData.temperatura}
-              onChange={handleChange}
-              placeholder="20-30"
-              className="form-input"
-              min="0"
-              max="50"
-            />
-          </div>
-          <div>
-            <label className="field-label">Nivel de Agua (%)</label>
-            <input
-              type="number"
-              name="nivelAgua"
-              value={sensorData.nivelAgua}
-              onChange={handleChange}
-              placeholder="50-80"
-              className="form-input"
-              min="0"
-              max="100"
-            />
-          </div>
-          <div>
-            <label className="field-label">Conductividad (dS/m)</label>
-            <input
-              type="number"
-              name="conductividad"
-              value={sensorData.conductividad}
-              onChange={handleChange}
-              placeholder="< 2"
-              className="form-input"
-              min="0"
-              max="10"
-              step="0.1"
-            />
-          </div>
-          <div>
-            <label className="field-label">Nitrógeno (mg/kg)</label>
-            <input
-              type="number"
-              name="nitrogeno"
-              value={sensorData.nitrogeno}
-              onChange={handleChange}
-              placeholder="> 20"
-              className="form-input"
-              min="0"
-            />
-          </div>
-          <div>
-            <label className="field-label">Fósforo (mg/kg)</label>
-            <input
-              type="number"
-              name="fosforo"
-              value={sensorData.fosforo}
-              onChange={handleChange}
-              placeholder="> 15"
-              className="form-input"
-              min="0"
-            />
-          </div>
-          <div>
-            <label className="field-label">Potasio (mg/kg)</label>
-            <input
-              type="number"
-              name="potasio"
-              value={sensorData.potasio}
-              onChange={handleChange}
-              placeholder="> 15"
-              className="form-input"
-              min="0"
-            />
-          </div>
+        {/* Grid de campos */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: 12,
+            marginBottom: "1.25rem",
+          }}
+        >
+          {[
+            { label: "Humedad del suelo (%)", name: "humedadSuelo", placeholder: "40–70", min: 0, max: 100, step: 1 },
+            { label: "pH del suelo", name: "ph", placeholder: "5.5–6.5", min: 0, max: 14, step: 0.1 },
+            { label: "Temperatura (°C)", name: "temperatura", placeholder: "20–30", min: 0, max: 50, step: 1 },
+            { label: "Nivel de agua (%)", name: "nivelAgua", placeholder: "50–80", min: 0, max: 100, step: 1 },
+            { label: "Conductividad (dS/m)", name: "conductividad", placeholder: "< 2", min: 0, max: 10, step: 0.1 },
+            { label: "Nitrógeno (mg/kg)", name: "nitrogeno", placeholder: "> 20", min: 0, step: 1 },
+            { label: "Fósforo (mg/kg)", name: "fosforo", placeholder: "> 15", min: 0, step: 1 },
+            { label: "Potasio (mg/kg)", name: "potasio", placeholder: "> 15", min: 0, step: 1 },
+          ].map(({ label, name, placeholder, min, max, step }) => (
+            <div key={name}>
+              <label
+                style={{ display: "block", fontSize: 12, color: "#6b7280", marginBottom: 5 }}
+              >
+                {label}
+              </label>
+              <input
+                type="number"
+                name={name}
+                value={sensorData[name]}
+                onChange={handleChange}
+                placeholder={placeholder}
+                min={min}
+                max={max}
+                step={step}
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "8px 10px",
+                  fontSize: 14,
+                  borderRadius: 8,
+                  border: "0.5px solid #d1d5db",
+                  background: "#f9fafb",
+                  color: "#111",
+                  outline: "none",
+                }}
+              />
+            </div>
+          ))}
         </div>
 
-        <div className="flex gap-3">
+        {/* Botones */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button
             onClick={calcular}
-            className="flex-1 px-4 py-3 rounded-lg font-bold transition-all"
-            style={{ background: "#2E6B45", color: "white" }}
+            style={{
+              flex: 1,
+              padding: "10px 18px",
+              borderRadius: 8,
+              border: "none",
+              background: green.darkText,
+              color: "#fff",
+              fontWeight: 500,
+              fontSize: 14,
+              cursor: "pointer",
+            }}
           >
-            Calcular Estado del Suelo
+            Calcular estado del suelo
           </button>
           <button
             onClick={limpiar}
-            className="px-4 py-3 rounded-lg font-bold transition-all"
-            style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}
+            style={{
+              padding: "10px 18px",
+              borderRadius: 8,
+              border: `0.5px solid ${green.border}`,
+              background: green.bg,
+              color: green.darkText,
+              fontWeight: 500,
+              fontSize: 14,
+              cursor: "pointer",
+            }}
           >
             Limpiar
           </button>
         </div>
       </div>
 
+      {/* ── Tarjeta de resultados ── */}
       {result && (
-        <div className="stat-card rounded-xl p-6">
-          <h3 className="font-serif text-white text-lg mb-4">Resultados del Análisis</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div
-              className="p-4 rounded-xl"
-              style={{
-                background: result.apto ? "rgba(46,107,69,0.15)" : "rgba(204,150,51,0.15)",
-                border: result.apto ? "1px solid rgba(76,175,125,0.3)" : "1px solid rgba(204,150,51,0.3)",
-              }}
-            >
-              <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Estado del Suelo</p>
-              <p
-                className="text-xl font-bold"
-                style={{ color: result.apto ? "#4CAF7D" : "#CC9633" }}
+        <div
+          style={{
+            background: "#ffffff",
+            border: "0.5px solid #e2e8e0",
+            borderRadius: 12,
+            padding: "1.25rem",
+          }}
+        >
+          <p style={{ margin: "0 0 12px", fontSize: 12, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Resultados del análisis
+          </p>
+
+          {/* Estado y puntuación */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: "1rem" }}>
+            {[
+              { label: "Estado del suelo", value: result.estado, ok: isOk },
+              { label: "Puntuación", value: `${result.puntuacion}/100`, ok: scoreOk },
+            ].map(({ label, value, ok }) => (
+              <div
+                key={label}
+                style={{
+                  background: ok ? green.bg : amber.bg,
+                  border: `0.5px solid ${ok ? green.border : amber.border}`,
+                  borderRadius: 8,
+                  padding: "12px 14px",
+                }}
               >
-                {result.estado}
-              </p>
-            </div>
-            <div
-              className="p-4 rounded-xl"
-              style={{
-                background: result.puntuacion >= 70 ? "rgba(46,107,69,0.15)" : "rgba(204,150,51,0.15)",
-                border: result.puntuacion >= 70 ? "1px solid rgba(76,175,125,0.3)" : "1px solid rgba(204,150,51,0.3)",
-              }}
-            >
-              <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Puntuación</p>
-              <p
-                className="text-xl font-bold"
-                style={{ color: result.puntuacion >= 70 ? "#4CAF7D" : "#CC9633" }}
-              >
-                {result.puntuacion}/100
-              </p>
-            </div>
+                <p style={{ margin: "0 0 4px", fontSize: 11, color: ok ? green.text : amber.text, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {label}
+                </p>
+                <p style={{ margin: 0, fontSize: 20, fontWeight: 500, color: ok ? green.text : amber.text }}>
+                  {value}
+                </p>
+              </div>
+            ))}
           </div>
 
-          <div className="mb-4">
-            <p className="text-white/40 text-xs uppercase tracking-wider mb-3">Recomendaciones</p>
-            {result.recomendaciones.length > 0 ? (
-              <ul className="space-y-2">
-                {result.recomendaciones.map((rec, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2 text-sm"
-                    style={{ color: "rgba(255,255,255,0.7)" }}
-                  >
-                    <span className="text-[#CC9633] mt-0.5">•</span>
-                    {rec}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm" style={{ color: "rgba(76,175,125,0.8)" }}>
-                ¡El suelo está en condiciones óptimas para el cultivo!
-              </p>
-            )}
-          </div>
+          {/* Recomendaciones */}
+          <p style={{ margin: "0 0 10px", fontSize: 12, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Recomendaciones
+          </p>
 
+          {result.recomendaciones.length > 0 ? (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {result.recomendaciones.map((rec, i) => (
+                <li
+                  key={i}
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    fontSize: 13,
+                    color: "#374151",
+                    padding: "6px 0",
+                    borderBottom: i < result.recomendaciones.length - 1 ? "0.5px solid #e5e7eb" : "none",
+                  }}
+                >
+                  <span style={{ color: amber.text, flexShrink: 0 }}>•</span>
+                  {rec}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p style={{ fontSize: 13, color: green.text, margin: 0 }}>
+              El suelo está en condiciones óptimas para el cultivo.
+            </p>
+          )}
+
+          {/* Aviso */}
           <div
-            className="p-4 rounded-xl"
             style={{
-              background: "rgba(204,150,51,0.1)",
-              border: "1px solid rgba(204,150,51,0.2)",
+              marginTop: "1rem",
+              background: "#f9fafb",
+              border: "0.5px solid #e5e7eb",
+              borderRadius: 8,
+              padding: "10px 14px",
+              fontSize: 12,
+              color: "#6b7280",
             }}
           >
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
-              ⚠️ Este análisis es orientativo. Para un diagnóstico definitivo, consulta con un agrónomo certificado.
-            </p>
+            ⚠️ Este análisis es orientativo. Para un diagnóstico definitivo, consulta con un agrónomo certificado.
           </div>
         </div>
       )}
