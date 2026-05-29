@@ -5,7 +5,7 @@ const enfermedades = [
     id: "moniliasis",
     nombre: "Moniliasis",
     agente: "Moniliophthera roreri",
-    imagen: "/enfermedades/cacao/monilia.jpg",
+    imagenUrl: "https://croplifela.org/images/ES/articulos/102/foto-cacao3.png",
     descripcion:
       "El hongo infecta la fruta en todas las fases de su desarrollo. Los síntomas varían según la edad del fruto: desde maduración temprana anormal hasta frutos deformados y manchas grasientas. A medida que avanza la infección, aparece un tejido ampolloso blanco que se vuelve gris por las esporas dispersadas por el viento. Los daños provocan la momificación de la fruta, que puede durar hasta 9 meses.",
     control:
@@ -17,7 +17,7 @@ const enfermedades = [
     id: "escoba",
     nombre: "Escoba de Bruja",
     agente: "Crinipellis perniciosa",
-    imagen: "/enfermedades/cacao/EscobaDeBruja2.jpg",
+    imagenUrl: "https://agrolink.ec/wp-content/uploads/2025/07/Image_29-scaled.jpeg",
     descripcion:
       "Ocasiona una brotación anormal en yemas terminales y axilares, con concentración de ramas a partir de un solo punto. En los cojines florales las flores quedan adheridas más tiempo de lo normal, engrosan su pedicelo y el ovario se desarrolla sin ser fecundado, generando los frutos llamados «chirimoyos».",
     control:
@@ -29,7 +29,7 @@ const enfermedades = [
     id: "pudricion",
     nombre: "Pudrición Parda de la Mazorca",
     agente: "Phytophthora sp.",
-    imagen: "/enfermedades/cacao/pudricionPardaDeLaMazorca.jpg",
+    imagenUrl: "https://www.agrosavia.co/media/fkcpo3ku/leonora-rodr%C3%ADguez-polanco-20.jpg",
     descripcion:
       "El síntoma inicial es una mancha circular parda con consistencia acuosa que va agrandándose hasta abarcar todo el fruto. A nivel del tronco produce chancros circulares que en estado avanzado exudan un fluido rojizo a través de las grietas de la corteza.",
     control:
@@ -41,7 +41,7 @@ const enfermedades = [
     id: "machete",
     nombre: "Mal de Machete",
     agente: "Ceratocystis fimbriata",
-    imagen: "/enfermedades/cacao/malMachete.png",
+    imagenUrl: "https://croplifela.org/images/ES/plagas/arbol-cacao-seco.jpg",
     descripcion:
       "El daño ocurre en tronco y ramas, y puede causar la muerte del árbol completo o de la rama afectada. El hongo ingresa principalmente a través de heridas provocadas por herramientas contaminadas, de ahí su nombre popular.",
     control:
@@ -53,7 +53,7 @@ const enfermedades = [
     id: "rosellinia",
     nombre: "Rosellinia",
     agente: "Rosellinia sp.",
-    imagen: "/enfermedades/cacao/rosellina.jpg",
+    imagenUrl: "https://scielo.iics.una.py/img/revistas/ia/v18n2//2305-0683-ia-18-02-00077-gf2.jpg",
     descripcion:
       "Conocida como llaga estrellada o podredumbre negra de la raíz. Afecta inicialmente el sistema radical y luego el cuello del tallo hasta causar la muerte. Los síntomas incluyen amarillamiento, clorosis, marchitamiento, defoliación progresiva, secamiento de ramas y finalmente la muerte.",
     control:
@@ -63,19 +63,28 @@ const enfermedades = [
   },
 ];
 
-function EnfermedadCard({ enfermedad }) {
+function EnfermedadCard({ enfermedad, isDark }) {
   const [expanded, setExpanded] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  const textPrimary = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.82)";
+  const textSecondary = isDark ? "rgba(255,255,255,0.58)" : "rgba(0,0,0,0.55)";
+  const textMuted = isDark ? "rgba(255,255,255,0.32)" : "rgba(0,0,0,0.35)";
+  const cardBg = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)";
+  const cardBorder = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.09)";
+  const dividerColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
+  const chevronBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
 
   return (
     <div
       className="rounded-2xl overflow-hidden transition-all duration-400"
       style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: cardBg,
+        border: `1px solid ${cardBorder}`,
         boxShadow: expanded ? `0 8px 32px ${enfermedad.color}18` : "none",
       }}
     >
-      {/* Header */}
+      {/* ── Header (siempre visible) ── */}
       <div
         className="flex items-center justify-between px-6 py-4 cursor-pointer select-none"
         onClick={() => setExpanded(!expanded)}
@@ -88,8 +97,8 @@ function EnfermedadCard({ enfermedad }) {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2
-                className="text-base font-bold text-white"
-                style={{ fontFamily: "'Playfair Display', serif" }}
+                className="text-base font-bold"
+                style={{ fontFamily: "'Playfair Display', serif", color: textPrimary }}
               >
                 {enfermedad.nombre}
               </h2>
@@ -104,7 +113,7 @@ function EnfermedadCard({ enfermedad }) {
                 {enfermedad.badge}
               </span>
             </div>
-            <p className="text-xs italic mt-0.5" style={{ color: "rgba(255,255,255,0.28)" }}>
+            <p className="text-xs italic mt-0.5" style={{ color: textMuted }}>
               {enfermedad.agente}
             </p>
           </div>
@@ -113,67 +122,117 @@ function EnfermedadCard({ enfermedad }) {
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300"
           style={{
-            background: expanded ? `${enfermedad.color}20` : "rgba(255,255,255,0.05)",
+            background: expanded ? `${enfermedad.color}20` : chevronBg,
             transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
           }}
         >
-          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" className="w-4 h-4"
-            stroke={expanded ? enfermedad.color : "rgba(255,255,255,0.35)"}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            strokeWidth="2"
+            className="w-4 h-4"
+            stroke={expanded ? enfermedad.color : textMuted}
+          >
             <path d="M6 9l6 6 6-6" />
           </svg>
         </div>
       </div>
 
-      {/* Collapsed preview */}
+      {/* ── Preview colapsado ── */}
       {!expanded && (
         <div className="flex items-center gap-4 px-6 pb-4">
-          <img
-            src={enfermedad.imagen}
-            alt={enfermedad.nombre}
-            className="w-14 h-14 object-cover rounded-xl shrink-0"
-            style={{ border: "1px solid rgba(255,255,255,0.07)" }}
-            onError={(e) => { e.target.style.display = "none"; }}
-          />
-          <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.32)" }}>
+          {!imgError ? (
+            <img
+              src={enfermedad.imagenUrl}
+              alt={enfermedad.nombre}
+              className="w-14 h-14 object-cover rounded-xl shrink-0"
+              style={{ border: `1px solid ${cardBorder}` }}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div
+              className="w-14 h-14 rounded-xl shrink-0 flex items-center justify-center"
+              style={{
+                background: `${enfermedad.color}10`,
+                border: `1px solid ${enfermedad.color}25`,
+              }}
+            >
+              <span style={{ color: enfermedad.color, fontSize: 22 }}>🍫</span>
+            </div>
+          )}
+          <p className="text-xs leading-relaxed" style={{ color: textMuted }}>
             {enfermedad.descripcion.substring(0, 120)}…
           </p>
         </div>
       )}
 
-      {/* Expanded */}
+      {/* ── Expandido ── */}
       {expanded && (
         <div
-          className="px-6 pb-6"
+          className="pb-6"
           style={{
-            borderTop: "1px solid rgba(255,255,255,0.06)",
+            borderTop: `1px solid ${dividerColor}`,
             animation: "fadeSlide 0.3s ease forwards",
           }}
         >
-          <div className="flex gap-6 mt-5 flex-wrap lg:flex-nowrap">
-            <div className="shrink-0">
-              <img
-                src={enfermedad.imagen}
-                alt={enfermedad.nombre}
-                className="w-44 h-36 object-cover rounded-xl"
-                style={{
-                  border: `1px solid ${enfermedad.color}35`,
-                  boxShadow: `0 4px 24px ${enfermedad.color}20`,
-                }}
-                onError={(e) => { e.target.parentElement.style.display = "none"; }}
-              />
+          <div className="flex gap-0 mt-0 flex-wrap lg:flex-nowrap">
+
+            {/* ── IMAGEN (columna izquierda) ── */}
+            <div
+              className="shrink-0 flex flex-col items-center justify-start gap-2 p-5"
+              style={{
+                width: "200px",
+                minWidth: "200px",
+                borderRight: `1px solid ${dividerColor}`,
+              }}
+            >
+              {!imgError ? (
+                <img
+                  src={enfermedad.imagenUrl}
+                  alt={enfermedad.nombre}
+                  className="w-full object-cover rounded-xl"
+                  style={{
+                    height: "160px",
+                    border: `1px solid ${enfermedad.color}35`,
+                    boxShadow: `0 4px 24px ${enfermedad.color}20`,
+                  }}
+                  onError={() => setImgError(true)}
+                />
+              ) : (
+                <div
+                  className="w-full rounded-xl flex items-center justify-center"
+                  style={{
+                    height: "160px",
+                    background: `${enfermedad.color}10`,
+                    border: `1px solid ${enfermedad.color}25`,
+                  }}
+                >
+                  <div className="text-center">
+                    <span style={{ fontSize: 36 }}>🍫</span>
+                    <p className="text-xs mt-1" style={{ color: textMuted }}>
+                      Imagen no disponible
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="flex-1 flex flex-col gap-4 min-w-0">
+            {/* ── CONTENIDO (columna derecha) ── */}
+            <div className="flex-1 flex flex-col gap-4 min-w-0 px-6 pt-5 pb-1">
+              {/* Descripción */}
               <div>
-                <p className="text-xs uppercase tracking-widest font-bold mb-1.5"
-                  style={{ color: enfermedad.color }}>
+                <p
+                  className="text-xs uppercase tracking-widest font-bold mb-1.5"
+                  style={{ color: enfermedad.color }}
+                >
                   Descripción
                 </p>
-                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.58)" }}>
+                <p className="text-sm leading-relaxed" style={{ color: textSecondary }}>
                   {enfermedad.descripcion}
                 </p>
               </div>
 
+              {/* Control */}
               <div
                 className="rounded-xl p-4"
                 style={{
@@ -182,15 +241,24 @@ function EnfermedadCard({ enfermedad }) {
                 }}
               >
                 <div className="flex items-center gap-2 mb-1.5">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                    className="w-3.5 h-3.5 shrink-0" style={{ color: enfermedad.color }}>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="w-3.5 h-3.5 shrink-0"
+                    style={{ color: enfermedad.color }}
+                  >
                     <path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
                   </svg>
-                  <p className="text-xs uppercase tracking-widest font-bold" style={{ color: enfermedad.color }}>
+                  <p
+                    className="text-xs uppercase tracking-widest font-bold"
+                    style={{ color: enfermedad.color }}
+                  >
                     Control
                   </p>
                 </div>
-                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.52)" }}>
+                <p className="text-sm leading-relaxed" style={{ color: textSecondary }}>
                   {enfermedad.control}
                 </p>
               </div>
@@ -202,7 +270,12 @@ function EnfermedadCard({ enfermedad }) {
   );
 }
 
-export default function ViewEnfermedades() {
+export default function ViewEnfermedades({ isDark = true }) {
+  const textPrimary = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.82)";
+  const textMuted = isDark ? "rgba(255,255,255,0.42)" : "rgba(0,0,0,0.40)";
+  const noticeBg = isDark ? "rgba(204,150,51,0.07)" : "rgba(204,150,51,0.08)";
+  const noticeBorder = isDark ? "rgba(204,150,51,0.18)" : "rgba(204,150,51,0.28)";
+
   return (
     <div className="max-w-4xl mx-auto">
       <style>{`
@@ -213,27 +286,29 @@ export default function ViewEnfermedades() {
       `}</style>
 
       {/* ── Hero banner ── */}
-      <div className="relative rounded-2xl overflow-hidden mb-8" style={{ height: "200px" }}>
+      <div
+        className="relative rounded-2xl overflow-hidden mb-8"
+        style={{ height: "200px" }}
+      >
         <img
           src="/enfermedades/cacao/monilia.jpg"
           alt="banner cacao"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: "brightness(0.22) saturate(0.5)" }}
+          style={{ filter: isDark ? "brightness(0.22) saturate(0.5)" : "brightness(0.55) saturate(0.6)" }}
           onError={(e) => { e.target.style.display = "none"; }}
         />
         <div
           className="absolute inset-0"
           style={{
-            background:
-              "linear-gradient(135deg, rgba(13,38,1,0.88) 0%, rgba(26,17,13,0.75) 100%)",
+            background: isDark
+              ? "linear-gradient(135deg, rgba(13,38,1,0.88) 0%, rgba(26,17,13,0.75) 100%)"
+              : "linear-gradient(135deg, rgba(20,60,10,0.72) 0%, rgba(50,35,10,0.60) 100%)",
           }}
         />
-        {/* Puntos decorativos */}
         <div
           className="absolute inset-0 opacity-8"
           style={{
-            backgroundImage:
-              "radial-gradient(circle, rgba(76,175,125,0.35) 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(circle, rgba(76,175,125,0.35) 1px, transparent 1px)",
             backgroundSize: "32px 32px",
           }}
         />
@@ -274,25 +349,29 @@ export default function ViewEnfermedades() {
       {/* Aviso chat flotante */}
       <div
         className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5"
-        style={{
-          background: "rgba(204,150,51,0.07)",
-          border: "1px solid rgba(204,150,51,0.18)",
-        }}
+        style={{ background: noticeBg, border: `1px solid ${noticeBorder}` }}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="#CC9633" strokeWidth="2" className="w-4 h-4 shrink-0">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#CC9633"
+          strokeWidth="2"
+          className="w-4 h-4 shrink-0"
+        >
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
-        <p className="text-xs" style={{ color: "rgba(255,255,255,0.42)" }}>
+        <p className="text-xs" style={{ color: textMuted }}>
           ¿Ves síntomas en tu cultivo? Usa el{" "}
-          <span style={{ color: "#CC9633" }}>botón de chat</span> en la esquina inferior derecha para
-          subir una foto y obtener una opinión preliminar de la IA.
+          <span style={{ color: "#CC9633" }}>botón de chat</span> en la esquina
+          inferior derecha para subir una foto y obtener una opinión preliminar
+          de la IA.
         </p>
       </div>
 
       {/* Tarjetas */}
       <div className="space-y-3">
         {enfermedades.map((e) => (
-          <EnfermedadCard key={e.id} enfermedad={e} />
+          <EnfermedadCard key={e.id} enfermedad={e} isDark={isDark} />
         ))}
       </div>
     </div>

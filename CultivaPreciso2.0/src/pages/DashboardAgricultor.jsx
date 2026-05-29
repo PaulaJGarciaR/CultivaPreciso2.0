@@ -272,7 +272,7 @@ export default function DashboardAgricultor({ user }) {
       case "noticias":
         return <ViewNoticias />;
       case "reports":
-        return <ViewReports cultivo={cultivo} />;
+        return <ViewReports cultivo={cultivo} user={user} />;
       case "calendar":
         return <ViewCalendar cultivo={cultivo} user={user} />;
       case "enfermedades":
@@ -446,6 +446,18 @@ export default function DashboardAgricultor({ user }) {
             <NavButton key={id} id={id} label={label} Icon={NavIcon} />
           ))}
         </nav>
+
+        {/* ── Logo marca de agua ── */}
+        {sidebarOpen && (
+          <div className="px-4 pb-3 flex justify-center">
+            <img
+              src={logoCultivaPreciso}
+              alt=""
+              className="w-40 h-40 object-contain select-none pointer-events-none"
+              style={{ opacity: isLightTheme ? 0.07 : 0.06 }}
+            />
+          </div>
+        )}
 
         {/* Usuario + logout */}
         <div
