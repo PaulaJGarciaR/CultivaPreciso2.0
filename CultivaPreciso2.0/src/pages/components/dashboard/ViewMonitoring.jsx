@@ -2,7 +2,7 @@
 import { SectionHeader } from "./shared";
 import ViewCalculadoraSensores from "./ViewCalculadoraSensores";
 
-export default function ViewMonitoring() {
+export default function ViewMonitoring({ isDark = true }) {
   return (
     <div className="space-y-5">
       <SectionHeader
@@ -56,7 +56,7 @@ export default function ViewMonitoring() {
             <span className="text-2xl">🧮</span>
           </div>
         </div>
-        <ViewCalculadoraSensores />
+        <ViewCalculadoraSensores isDark={isDark} />
       </div>
     </div>
   );

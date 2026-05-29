@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function ViewCalculadoraSensores() {
+export default function ViewCalculadoraSensores({ isDark = true }) {
   const [sensorData, setSensorData] = useState({
     humedadSuelo: "",
     ph: "",
@@ -81,17 +81,17 @@ export default function ViewCalculadoraSensores() {
     setResult(null);
   };
 
-  // ── Paleta oscura cacao ──────────────────────────────────────────
+  // ── Paleta condicional tema claro/oscuro ─────────────────────────────
   const gold = "#CC9633";
   const green = "#4CAF7D";
-  const cardBg = "rgba(255,255,255,0.03)";
-  const cardBorder = "rgba(255,255,255,0.07)";
-  const inputBg = "rgba(255,255,255,0.04)";
-  const inputBorder = "rgba(255,255,255,0.10)";
-  const labelColor = "rgba(255,255,255,0.35)";
-  const textPrimary = "rgba(255,255,255,0.85)";
-  const textSecondary = "rgba(255,255,255,0.52)";
-  const divider = "rgba(255,255,255,0.06)";
+  const cardBg = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)";
+  const cardBorder = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.09)";
+  const inputBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)";
+  const inputBorder = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.15)";
+  const labelColor = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.55)";
+  const textPrimary = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.82)";
+  const textSecondary = isDark ? "rgba(255,255,255,0.52)" : "rgba(0,0,0,0.65)";
+  const divider = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
 
   const isOk = result?.apto && result?.puntuacion >= 70;
   const scoreOk = (result?.puntuacion ?? 0) >= 70;
