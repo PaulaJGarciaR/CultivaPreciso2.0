@@ -447,18 +447,6 @@ export default function DashboardAgricultor({ user }) {
           ))}
         </nav>
 
-        {/* ── Logo marca de agua ── */}
-        {sidebarOpen && (
-          <div className="px-4 pb-3 flex justify-center">
-            <img
-              src={logoCultivaPreciso}
-              alt=""
-              className="w-40 h-40 object-contain select-none pointer-events-none"
-              style={{ opacity: isLightTheme ? 0.07 : 0.06 }}
-            />
-          </div>
-        )}
-
         {/* Usuario + logout */}
         <div
           className="px-4 py-4 shrink-0"
