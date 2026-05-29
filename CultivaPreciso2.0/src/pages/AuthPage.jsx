@@ -180,11 +180,9 @@ export default function AuthPage() {
   const redirectByRole = async (uid) => {
     const snap = await getDoc(doc(db, "users", uid));
     const role = snap.data()?.role || "agricultor";
-    if (role === "admin") {
-      navigate("/dashboardAdmin");
-    } else {
-      navigate("/dashboardAgricultor");
-    }
+    if (role === "admin") navigate("/dashboardAdmin");
+    else if (role === "profesional") navigate("/dashboardProfesional");
+    else navigate("/dashboardAgricultor");
   };
 
   // Login
@@ -207,6 +205,7 @@ export default function AuthPage() {
     email: "",
     password: "",
     confirm: "",
+    userType: "agricultor",
   });
   const [regTouched, setRegTouched] = useState({});
   const regErrors = {
@@ -285,7 +284,7 @@ export default function AuthPage() {
           secondSurname: reg.secondSurname || "",
           email: reg.email,
           uid: userCred.user.uid,
-          role: "agricultor",
+          role: reg.userType,
           createdAt: serverTimestamp(),
         });
       } catch (firestoreErr) {
@@ -304,7 +303,7 @@ export default function AuthPage() {
         background: "#422D1A",
         color: "#ffffff",
       });
-      navigate("/dashboardAgricultor");
+      await redirectByRole(userCred.user.uid);
     } catch (authErr) {
       console.log("Auth ERROR:", authErr.code, authErr.message);
       setGlobalError(translateError(authErr.code));
@@ -623,35 +622,42 @@ export default function AuthPage() {
                   </div>
                 </div>
                 <div className="flex gap-3">
-  <div className="flex-1">
-    <FieldWrapper
-      label="Primer apellido"
-      error={regErrors.lastName}
-      touched={regTouched.lastName}
-    >
-      <TextInput
-        icon={<User size={16} />}
-        value={reg.lastName}
-        onChange={(e) => setReg((p) => ({ ...p, lastName: e.target.value }))}
-        onBlur={() => touchRegField("lastName")}
-        placeholder="Primer Apellido"
-        hasError={!!regErrors.lastName}
-        hasSuccess={!regErrors.lastName}
-        touched={regTouched.lastName}
-      />
-    </FieldWrapper>
-  </div>
-  <div className="flex-1">
-    <FieldWrapper label="Segundo apellido">
-      <TextInput
-        icon={<User size={16} />}
-        value={reg.secondSurname}
-        onChange={(e) => setReg((p) => ({ ...p, secondSurname: e.target.value }))}
-        placeholder="Segundo Apellido"
-      />
-    </FieldWrapper>
-  </div>
-</div>
+                  <div className="flex-1">
+                    <FieldWrapper
+                      label="Primer apellido"
+                      error={regErrors.lastName}
+                      touched={regTouched.lastName}
+                    >
+                      <TextInput
+                        icon={<User size={16} />}
+                        value={reg.lastName}
+                        onChange={(e) =>
+                          setReg((p) => ({ ...p, lastName: e.target.value }))
+                        }
+                        onBlur={() => touchRegField("lastName")}
+                        placeholder="Primer Apellido"
+                        hasError={!!regErrors.lastName}
+                        hasSuccess={!regErrors.lastName}
+                        touched={regTouched.lastName}
+                      />
+                    </FieldWrapper>
+                  </div>
+                  <div className="flex-1">
+                    <FieldWrapper label="Segundo apellido">
+                      <TextInput
+                        icon={<User size={16} />}
+                        value={reg.secondSurname}
+                        onChange={(e) =>
+                          setReg((p) => ({
+                            ...p,
+                            secondSurname: e.target.value,
+                          }))
+                        }
+                        placeholder="Segundo Apellido"
+                      />
+                    </FieldWrapper>
+                  </div>
+                </div>
 
                 <FieldWrapper
                   label="Correo electrónico"
@@ -736,6 +742,43 @@ export default function AuthPage() {
                     }
                   />
                 </FieldWrapper>
+                {/* Tipo de usuario */}
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-3 mt-1">
+                    {[
+                      { value: "agricultor", label: "Agricultor" },
+                      {
+                        value: "profesional",
+                        label: "Profesional",
+                      },
+                    ].map(({ value, label, emoji }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          setReg((p) => ({ ...p, userType: value }))
+                        }
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer"
+                        style={{
+                          background:
+                            reg.userType === value
+                              ? "rgba(204,150,51,0.2)"
+                              : "rgba(255,255,255,0.05)",
+                          border:
+                            reg.userType === value
+                              ? "1px solid #CC9633"
+                              : "1px solid rgba(255,255,255,0.1)",
+                          color:
+                            reg.userType === value
+                              ? "#CC9633"
+                              : "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <button
                   onClick={handleRegister}
