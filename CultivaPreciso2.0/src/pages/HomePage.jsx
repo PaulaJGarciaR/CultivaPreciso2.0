@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import logoCultivaPreciso from "../assets/cultiva-preciso-logo.svg";
 
 const NAV_LINKS = ["Inicio", "Servicios", "Monitoreo", "Nosotros", "Contacto"];
 
@@ -431,10 +432,16 @@ export default function CacaoTech() {
 
       {/* ── NAVBAR ── */}
       <nav className={`fixed top-0 left-0 right-0 z-50 p-2 flex items-center justify-between px-5 sm:px-10 lg:px-14 transition-all duration-300 ${scrolled ? "bg-[#55362E] backdrop-blur-xl shadow-[0_1px_0_rgba(255,255,255,0.08)]" : "bg-transparent"}`}>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="font-serif text-lg sm:text-xl text-white">
-            Cultiva<span className="text-[#CC9633]">Preciso</span>
-          </span>
+          {/* Logo */}
+        <div
+          className="flex items-center gap-3 px-4 h-16 shrink-0"
+        >
+          <img src={logoCultivaPreciso} alt="CultivaPreciso" className="w-10 h-10 rounded-full shrink-0 object-contain" />
+          
+            <span className= "text-white text-xl font-bold" >
+              Cultiva<span className="text-[#CC9633] text-xl font-black">Preciso</span>
+            </span>
+          
         </div>
         <div className="hidden md:flex items-center gap-8 lg:gap-10">
           {NAV_LINKS.map((l) => <a key={l} href="#" className="nav-link">{l}</a>)}

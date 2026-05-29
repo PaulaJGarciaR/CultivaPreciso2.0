@@ -8,6 +8,7 @@ import Home from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import DashboardAgricultor from "./pages/DashboardAgricultor";
 import DashboardAdmin from "./pages/DashboardAdmin";
+import DashboardProfesional from "./pages/DashboardProfesional";
 import "./App.css";
 
 function PrivateRoute({ children, requiredRole }) {
@@ -16,7 +17,10 @@ function PrivateRoute({ children, requiredRole }) {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (!user) { setChecking(false); return; }
+    if (!user) {
+      setChecking(false);
+      return;
+    }
     getDoc(doc(db, "users", user.uid))
       .then((snap) => {
         setRole(snap.data()?.role || "agricultor");
@@ -25,7 +29,8 @@ function PrivateRoute({ children, requiredRole }) {
       .catch(() => setChecking(false));
   }, [user]);
 
-  if (loading || checking) return <h1 style={{ color: "white" }}>Cargando...</h1>;
+  if (loading || checking)
+    return <h1 style={{ color: "white" }}>Cargando...</h1>;
   if (!user) return <Navigate to="/comenzar" replace />;
   if (requiredRole && role !== requiredRole) return <Navigate to="/" replace />;
   return children;
@@ -53,6 +58,14 @@ export default function App() {
         element={
           <PrivateRoute requiredRole="admin">
             <DashboardAdmin user={user} />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/dashboardProfesional"
+        element={
+          <PrivateRoute requiredRole="profesional">
+            <DashboardProfesional user={user} />
           </PrivateRoute>
         }
       />

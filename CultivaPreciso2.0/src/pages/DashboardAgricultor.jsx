@@ -11,6 +11,7 @@ import ViewReports from "./components/dashboard/ViewReports";
 import ViewCalendar from "./components/dashboard/ViewCalendar.jsx";
 import ViewPerfil from "./components/dashboard/ViewPerfil.jsx";
 import ViewNoticias from "./components/dashboard/ViewNoticias.jsx";
+import ViewProfesionales from "./components/dashboard/ViewProfesionales.jsx";
 
 // ── Nuevas vistas de Fitosanidad ──────────────────────────────────────────────
 import ViewEnfermedades from "./components/dashboard/ViewEnfermedades.jsx";
@@ -186,6 +187,14 @@ const Icon = {
       <path d="M8 9h6M8 13h8M8 17h5" />
     </svg>
   ),
+   Users: () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+),
 };
 
 // ── Grupos de navegación ──────────────────────────────────────────────────────
@@ -198,7 +207,9 @@ const NAV_PRINCIPAL = [
   { id: "reports", label: "Reportes", Icon: Icon.Reports },
   { id: "calendar", label: "Calendario", Icon: Icon.Calendario },
   { id: "enfermedades", label: "Enfermedades", Icon: Icon.Enfermedad },
+  { id: "profesionales", label: "Profesionales", Icon: Icon.Users },
   { id: "perfil", label: "Mi Perfil", Icon: Icon.User },
+  
 ];
 
 export default function DashboardAgricultor({ user }) {
@@ -285,6 +296,7 @@ export default function DashboardAgricultor({ user }) {
             setUserData={setUserData}
           />
         );
+      case "profesionales": return <ViewProfesionales  cultivo={cultivo}/>;
       default:
         return null;
     }
@@ -446,6 +458,18 @@ export default function DashboardAgricultor({ user }) {
             <NavButton key={id} id={id} label={label} Icon={NavIcon} />
           ))}
         </nav>
+
+        {/* ── Logo marca de agua ── */}
+        {sidebarOpen && (
+          <div className="px-4 pb-3 flex justify-center">
+            <img
+              src={logoCultivaPreciso}
+              alt=""
+              className="w-20 h-20 object-contain select-none pointer-events-none"
+              style={{ opacity: isLightTheme ? 0.07 : 0.06 }}
+            />
+          </div>
+        )}
 
         {/* Usuario + logout */}
         <div
