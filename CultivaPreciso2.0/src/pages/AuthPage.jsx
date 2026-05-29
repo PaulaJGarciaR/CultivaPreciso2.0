@@ -17,11 +17,10 @@ import {
   sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, GoogleProvider } from "../firebase.js";
-import { doc, setDoc,getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-
 
 // ── Helpers de validación ──
 const validators = {
@@ -62,7 +61,6 @@ const translateError = (code) => {
   };
   return errors[code] || "Ocurrió un error. Intenta de nuevo.";
 };
-
 
 function FieldWrapper({ label, error, touched, success, children }) {
   return (
@@ -180,14 +178,14 @@ export default function AuthPage() {
   const navigate = useNavigate();
 
   const redirectByRole = async (uid) => {
-  const snap = await getDoc(doc(db, "users", uid));
-  const role = snap.data()?.role || "agricultor";
-  if (role === "admin") {
-    navigate("/dashboardAdmin");
-  } else {
-    navigate("/dashboardAgricultor");
-  }
-};
+    const snap = await getDoc(doc(db, "users", uid));
+    const role = snap.data()?.role || "agricultor";
+    if (role === "admin") {
+      navigate("/dashboardAdmin");
+    } else {
+      navigate("/dashboardAgricultor");
+    }
+  };
 
   // Login
   const [login, setLogin] = useState({ email: "", password: "" });
@@ -203,7 +201,9 @@ export default function AuthPage() {
   // Register
   const [reg, setReg] = useState({
     firstName: "",
+    middleName: "",
     lastName: "",
+    secondSurname: "",
     email: "",
     password: "",
     confirm: "",
@@ -244,7 +244,11 @@ export default function AuthPage() {
     setLoading(true);
     clearMessages();
     try {
-      const userCred = await signInWithEmailAndPassword(auth, login.email, login.password);
+      const userCred = await signInWithEmailAndPassword(
+        auth,
+        login.email,
+        login.password,
+      );
       Swal.fire({
         icon: "success",
         title: "Bienvenido",
@@ -276,7 +280,9 @@ export default function AuthPage() {
       try {
         await setDoc(doc(db, "users", userCred.user.uid), {
           firstName: reg.firstName,
+          middleName: reg.middleName || "",
           lastName: reg.lastName,
+          secondSurname: reg.secondSurname || "",
           email: reg.email,
           uid: userCred.user.uid,
           role: "agricultor",
@@ -307,28 +313,28 @@ export default function AuthPage() {
     }
   };
 
- const handleGoogle = async () => {
-  setLoading(true);
-  clearMessages();
-  try {
-    const result = await signInWithPopup(auth, GoogleProvider);
-    const user = result.user;
+  const handleGoogle = async () => {
+    setLoading(true);
+    clearMessages();
+    try {
+      const result = await signInWithPopup(auth, GoogleProvider);
+      const user = result.user;
 
-    const docRef = doc(db, "users", user.uid);
-    const docSnap = await getDoc(docRef);
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
 
-    if (!docSnap.exists()) {
-      await setDoc(docRef, {
-        firstName: user.displayName?.split(" ")[0] || "",
-        lastName:  user.displayName?.split(" ").slice(1).join(" ") || "",
-        email:     user.email,
-        photoURL:  user.photoURL,
-        uid:       user.uid,
-        createdAt: serverTimestamp(),
-        provider:  "google",
-      });
-    }
-    Swal.fire({
+      if (!docSnap.exists()) {
+        await setDoc(docRef, {
+          firstName: user.displayName?.split(" ")[0] || "",
+          lastName: user.displayName?.split(" ").slice(1).join(" ") || "",
+          email: user.email,
+          photoURL: user.photoURL,
+          uid: user.uid,
+          createdAt: serverTimestamp(),
+          provider: "google",
+        });
+      }
+      Swal.fire({
         icon: "success",
         title: "Bienvenido",
         text: "Inicio de sesión exitoso",
@@ -338,38 +344,38 @@ export default function AuthPage() {
         color: "#ffffff",
       });
 
-    await redirectByRole(result.user.uid);
-  } catch (err) {
-    setGlobalError(translateError(err.code));
-  } finally {
-    setLoading(false);
-  }
-};
+      await redirectByRole(result.user.uid);
+    } catch (err) {
+      setGlobalError(translateError(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
 
- const handleForgotPassword = async () => {
-  touchLoginField("email");
+  const handleForgotPassword = async () => {
+    touchLoginField("email");
 
-  if (!validators.email(login.email)) {
-    setGlobalError("Ingresa un correo válido para recuperar tu contraseña.");
-    return;
-  }
+    if (!validators.email(login.email)) {
+      setGlobalError("Ingresa un correo válido para recuperar tu contraseña.");
+      return;
+    }
 
-  clearMessages();
-  setLoading(true); // ← también faltaba esto
+    clearMessages();
+    setLoading(true); // ← también faltaba esto
 
-  try {
-    await sendPasswordResetEmail(auth, login.email);
-    setGlobalSuccess("Correo de recuperación enviado.");
-  } catch (err) {
-    setGlobalError(translateError(err.code));
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      await sendPasswordResetEmail(auth, login.email);
+      setGlobalSuccess("Correo de recuperación enviado.");
+    } catch (err) {
+      setGlobalError(translateError(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const home=()=>{
-    navigate("/")
-  }
+  const home = () => {
+    navigate("/");
+  };
 
   return (
     <div className="flex min-h-screen font-sans">
@@ -393,9 +399,11 @@ export default function AuthPage() {
       <div className="w-full md:w-[50%] bg-[#55362E] flex flex-col justify-center px-8 py-10 overflow-y-auto">
         <div className="relative bg-[#382615]/40 px-4 py-10 rounded-2xl">
           <div className="absolute -top-3 -right-3 w-12 h-12 bg-[#CC9633] rounded-full hover:bg-[#B5832D]">
-            <button className="flex justify-center items-center h-full w-full cursor-pointer" onClick={home}>
+            <button
+              className="flex justify-center items-center h-full w-full cursor-pointer"
+              onClick={home}
+            >
               <svg
-              
                 class="w-6 h-6 text-[#55362E]"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
@@ -597,29 +605,53 @@ export default function AuthPage() {
                         hasError={!!regErrors.firstName}
                         hasSuccess={!regErrors.firstName}
                         touched={regTouched.firstName}
+                        placeholder={"Primer Apellido"}
                       />
                     </FieldWrapper>
                   </div>
                   <div className="flex-1">
-                    <FieldWrapper
-                      label="Apellido"
-                      error={regErrors.lastName}
-                      touched={regTouched.lastName}
-                    >
+                    <FieldWrapper label="Segundo nombre">
                       <TextInput
                         icon={<User size={16} />}
-                        value={reg.lastName}
+                        value={reg.middleName}
                         onChange={(e) =>
-                          setReg((p) => ({ ...p, lastName: e.target.value }))
+                          setReg((p) => ({ ...p, middleName: e.target.value }))
                         }
-                        onBlur={() => touchRegField("lastName")}
-                        hasError={!!regErrors.lastName}
-                        hasSuccess={!regErrors.lastName}
-                        touched={regTouched.lastName}
+                        placeholder="Segundo Nombre"
                       />
                     </FieldWrapper>
                   </div>
                 </div>
+                <div className="flex gap-3">
+  <div className="flex-1">
+    <FieldWrapper
+      label="Primer apellido"
+      error={regErrors.lastName}
+      touched={regTouched.lastName}
+    >
+      <TextInput
+        icon={<User size={16} />}
+        value={reg.lastName}
+        onChange={(e) => setReg((p) => ({ ...p, lastName: e.target.value }))}
+        onBlur={() => touchRegField("lastName")}
+        placeholder="Primer Apellido"
+        hasError={!!regErrors.lastName}
+        hasSuccess={!regErrors.lastName}
+        touched={regTouched.lastName}
+      />
+    </FieldWrapper>
+  </div>
+  <div className="flex-1">
+    <FieldWrapper label="Segundo apellido">
+      <TextInput
+        icon={<User size={16} />}
+        value={reg.secondSurname}
+        onChange={(e) => setReg((p) => ({ ...p, secondSurname: e.target.value }))}
+        placeholder="Segundo Apellido"
+      />
+    </FieldWrapper>
+  </div>
+</div>
 
                 <FieldWrapper
                   label="Correo electrónico"

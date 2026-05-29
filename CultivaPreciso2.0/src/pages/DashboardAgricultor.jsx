@@ -272,7 +272,7 @@ export default function DashboardAgricultor({ user }) {
       case "noticias":
         return <ViewNoticias />;
       case "reports":
-        return <ViewReports cultivo={cultivo} />;
+        return <ViewReports cultivo={cultivo} user={user} />;
       case "calendar":
         return <ViewCalendar cultivo={cultivo} user={user} />;
       case "enfermedades":
