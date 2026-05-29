@@ -7,12 +7,27 @@ import { SectionHeader } from "./shared";
 
 const VARIEDADES = ["Híbrido", "TCS (Trinitario Colombia Selection)"];
 
+const MUNICIPIOS_CATATUMBO = [
+  "Tibú",
+  "El Tarra",
+  "Sardinata",
+  "Convención",
+  "Teorama",
+  "Hacarí",
+  "San Calixto",
+  "El Carmen",
+  "Ocaña",
+  "La Playa de Belén",
+  "Ábrego",
+];
+
 export default function ViewCultivo({ cultivo, setCultivo, user }) {
   const [form,    setForm]    = useState({ ...cultivo });
   const [saved,   setSaved]   = useState(false);
   const [saving,  setSaving]  = useState(false);   // ← faltaba
   const [loading, setLoading] = useState(true);    // ← faltaba
   const [unidad,  setUnidad]  = useState("ha");
+  const [show3D,  setShow3D]  = useState(false);
   const loadedRef = useRef(false);
 
   // ── Cargar datos desde Firestore ─────────────────────────────────────────
@@ -211,12 +226,16 @@ export default function ViewCultivo({ cultivo, setCultivo, user }) {
 
           <div>
             <label className="field-label">Municipio del Catatumbo</label>
-            <input
-              className="form-input" type="text"
-              placeholder="Ej: Teorama, Hacarí.."
+            <select
+              className="form-input"
               value={form.region || ""}
               onChange={e => set("region", e.target.value)}
-            />
+            >
+              <option value="">— Seleccionar municipio —</option>
+              {MUNICIPIOS_CATATUMBO.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -285,6 +304,17 @@ export default function ViewCultivo({ cultivo, setCultivo, user }) {
                   <p className="text-white/30 text-xs mt-1">
                     {areaHa.toFixed(4)} ha × 10.000 m² ÷ 6 m² = {plantas.toLocaleString()} plantas
                   </p>
+                  <button
+                    onClick={() => setShow3D(true)}
+                    className="w-full mt-3 py-2 rounded-lg text-xs font-bold transition-all"
+                    style={{
+                      background: "rgba(204,150,51,0.15)",
+                      border: "1px solid rgba(204,150,51,0.3)",
+                      color: "#CC9633",
+                    }}
+                  >
+                    🌳 Ver modelo 3D del cultivo
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -344,6 +374,196 @@ export default function ViewCultivo({ cultivo, setCultivo, user }) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Modal Visualizador 3D ── */}
+      {show3D && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.8)" }}
+          onClick={() => setShow3D(false)}
+        >
+          <div
+            className="rounded-2xl overflow-hidden max-w-4xl w-full max-h-[90vh]"
+            style={{ background: "#1A110D", border: "1px solid rgba(255,255,255,0.1)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <div>
+                <h3 className="font-serif text-white text-xl">Modelo 3D del Cultivo</h3>
+                <p className="text-white/50 text-xs mt-1">
+                  {plantas.toLocaleString()} plantas en {areaHa.toFixed(4)} hectáreas
+                </p>
+              </div>
+              <button
+                onClick={() => setShow3D(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 overflow-auto" style={{ maxHeight: "calc(90vh - 80px)" }}>
+              <PlantVisualization3D plantas={plantas} areaHa={areaHa} />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Componente Visualizador 3D ─────────────────────────────────────────────
+function PlantVisualization3D({ plantas, areaHa }) {
+  // Calcular filas y columnas basado en el área
+  const filas = Math.ceil(Math.sqrt(plantas));
+  const columnas = Math.ceil(plantas / filas);
+
+  // Limitar para rendimiento visual
+  const maxFilas = Math.min(filas, 30);
+  const maxColumnas = Math.min(columnas, 30);
+  const plantasMostrar = Math.min(plantas, maxFilas * maxColumnas);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.05)" }}>
+          <p className="text-white/50 text-xs">Filas</p>
+          <p className="text-white font-bold text-lg">{filas}</p>
+        </div>
+        <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.05)" }}>
+          <p className="text-white/50 text-xs">Columnas</p>
+          <p className="text-white font-bold text-lg">{columnas}</p>
+        </div>
+        <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.05)" }}>
+          <p className="text-white/50 text-xs">Separación</p>
+          <p className="text-white font-bold text-lg">3m × 2m</p>
+        </div>
+      </div>
+
+      <div
+        className="relative rounded-xl overflow-hidden"
+        style={{
+          height: "400px",
+          background: "linear-gradient(135deg, #1a3d28 0%, #2d5a3f 50%, #1a3d28 100%)",
+          border: "1px solid rgba(76,175,125,0.3)",
+        }}
+      >
+        {/* Grid isométrico simulado */}
+        <svg
+          viewBox={`0 0 ${maxColumnas * 40} ${maxFilas * 35}`}
+          className="w-full h-full"
+          style={{ margin: "20px auto" }}
+        >
+          {/* Líneas de guía */}
+          {[...Array(maxFilas)].map((_, i) => (
+            <line
+              key={`h-${i}`}
+              x1="0"
+              y1={i * 35}
+              x2={maxColumnas * 40}
+              y2={i * 35}
+              stroke="rgba(255,255,255,0.1)"
+              strokeWidth="0.5"
+            />
+          ))}
+          {[...Array(maxColumnas)].map((_, i) => (
+            <line
+              key={`v-${i}`}
+              x1={i * 40}
+              y1="0"
+              x2={i * 40}
+              y2={maxFilas * 35}
+              stroke="rgba(255,255,255,0.1)"
+              strokeWidth="0.5"
+            />
+          ))}
+
+          {/* Plantas */}
+          {[...Array(plantasMostrar)].map((_, i) => {
+            const fila = Math.floor(i / maxColumnas);
+            const columna = i % maxColumnas;
+            const x = columna * 40 + 20;
+            const y = fila * 35 + 17;
+
+            return (
+              <g key={i}>
+                {/* Sombra */}
+                <ellipse
+                  cx={x}
+                  cy={y + 8}
+                  rx="8"
+                  ry="4"
+                  fill="rgba(0,0,0,0.3)"
+                />
+                {/* Tronco */}
+                <rect
+                  x={x - 2}
+                  y={y - 5}
+                  width="4"
+                  height="10"
+                  fill="#8B4513"
+                />
+                {/* Copa del árbol */}
+                <circle
+                  cx={x}
+                  cy={y - 8}
+                  r="10"
+                  fill="#4CAF7D"
+                  stroke="#2E6B45"
+                  strokeWidth="1"
+                />
+                {/* Detalles de la copa */}
+                <circle
+                  cx={x - 3}
+                  cy={y - 10}
+                  r="4"
+                  fill="#66BB6A"
+                  opacity="0.7"
+                />
+                <circle
+                  cx={x + 3}
+                  cy={y - 6}
+                  r="3"
+                  fill="#81C784"
+                  opacity="0.6"
+                />
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Leyenda */}
+        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ background: "#4CAF7D", border: "1px solid #2E6B45" }}
+              />
+              <span className="text-white/70 text-xs">Planta de cacao</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ background: "#8B4513" }} />
+              <span className="text-white/70 text-xs">Tronco</span>
+            </div>
+          </div>
+          {plantas > plantasMostrar && (
+            <p className="text-white/50 text-xs">
+              Mostrando {plantasMostrar.toLocaleString()} de {plantas.toLocaleString()} plantas
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-lg p-4" style={{ background: "rgba(255,255,255,0.03)" }}>
+        <p className="text-white/40 text-xs leading-relaxed">
+          <strong className="text-white/60">Nota:</strong> Esta es una representación visual simplificada del patrón de siembra.
+          En la práctica, las plantas se distribuyen en un sistema de 3m entre filas y 2m entre plantas,
+          lo que da un área de 6m² por planta. El modelo muestra una vista isométrica aproximada del cultivo.
+        </p>
       </div>
     </div>
   );

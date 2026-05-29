@@ -631,7 +631,8 @@ export default function CacaoTech() {
         <div className="mx-auto flex flex-wrap gap-16">
           <div className="max-w-sm flex w-[50%]">
             <div>
-              <div className="flex items-center gap-2 mb-5">
+              <div className="flex items-center gap-3 mb-5">
+                <img src={logoCultivaPreciso} alt="CultivaPreciso" className="w-10 h-10 rounded-full shrink-0 object-contain" />
                 <span className="text-xl font-semibold tracking-tight">
                   Cultiva<span className="text-[#CC9633]">Preciso</span>
                 </span>

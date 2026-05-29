@@ -279,7 +279,7 @@ export default function DashboardAgricultor({ user }) {
       case "weather":
         return <ViewWeather cultivo={cultivo} />;
       case "monitoring":
-        return <ViewMonitoring />;
+        return <ViewMonitoring isDark={!isLightTheme} />;
       case "noticias":
         return <ViewNoticias />;
       case "reports":
@@ -287,7 +287,7 @@ export default function DashboardAgricultor({ user }) {
       case "calendar":
         return <ViewCalendar cultivo={cultivo} user={user} />;
       case "enfermedades":
-        return <ViewEnfermedades />;
+        return <ViewEnfermedades isDark={!isLightTheme} />;
       case "perfil":
         return (
           <ViewPerfil
