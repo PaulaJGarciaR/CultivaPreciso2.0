@@ -461,230 +461,242 @@ export default function ViewReports({ cultivo, user }) {
 
   // ── UI ─────────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5 max-w-3xl">
-      <SectionHeader
-        title="Reportes"
-        sub="Resumen técnico de tu finca y bitácora de campo."
-      />
+    <div className="flex justify-center">
+      <div className="space-y-5 w-[80%]">
+        <style>{`
+  .theme-light main .rep-divider{border-color:rgba(46,107,69,0.14)!important;}
+  .theme-light main .rep-line{background:rgba(46,107,69,0.14)!important;}
+  .theme-light main .rep-row{background:#F7F5EC!important;border-color:rgba(46,107,69,0.10)!important;}
+  .theme-light main .rep-note{background:#F7F5EC!important;}
+  .theme-light main .rep-count{background:rgba(46,107,69,0.08)!important;color:rgba(47,40,31,0.6)!important;}
+  .theme-light main .rep-active{color:#2E6B45!important;background:rgba(46,107,69,0.12)!important;}
+  .theme-light main button.rep-pdf{color:#2F7FB0!important;background:rgba(47,127,176,0.10)!important;border-color:rgba(47,127,176,0.30)!important;}
+  .theme-light main .rep-pill{filter:brightness(0.72) saturate(1.1);}
+`}</style>
+        <SectionHeader
+          title="Reportes"
+          sub="Resumen técnico de tu finca y bitácora de campo."
+        />
 
-      {!cultivo.hectareas ? (
-        <div className="stat-card rounded-xl p-10 text-center">
-          <span className="text-3xl">📋</span>
-          <p className="text-white/40 text-sm mt-3">
-            Registra los datos de tu cultivo para generar el reporte.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {/* ── Reporte técnico ── */}
-          <div className="stat-card rounded-xl p-6 space-y-5">
-            <div
-              className="flex items-start justify-between pb-4"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              <div>
-                <h3 className="font-serif text-white text-xl">
-                  {cultivo.nombre || "Mi Finca"}
-                </h3>
-                <p className="text-white/40 text-sm mt-0.5">
-                  Reporte técnico · {today}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="px-3 py-1 rounded-full text-xs font-bold text-[#4CAF7D] bg-[#2E6B45]/20">
-                  Activo
-                </div>
-                <button
-                  onClick={handleExportPDF}
-                  disabled={exporting || loadingNotes}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-50"
-                  style={{
-                    background: "rgba(107,174,214,0.12)",
-                    border: "1px solid rgba(107,174,214,0.25)",
-                    color: "#6BAED6",
-                  }}
-                >
-                  {exporting ? (
-                    <>
-                      <Loader2 size={15} className="animate-spin" />{" "}
-                      Generando...
-                    </>
-                  ) : (
-                    <>
-                      <FileDown size={15} /> Exportar PDF
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Tabla */}
-            <div>
-              <p className="text-white/40 text-xs uppercase tracking-wider mb-3">
-                Datos del cultivo
-              </p>
-              <div className="space-y-1.5">
-                {[
-                  {
-                    label: "Área total",
-                    value: `${cultivo.hectareas} hectáreas`,
-                  },
-                  {
-                    label: "Variedad",
-                    value: cultivo.variedad || "No especificada",
-                  },
-                  {
-                    label: "Región",
-                    value: cultivo.region || "No especificada",
-                  },
-                  {
-                    label: "Fecha de siembra",
-                    value: cultivo.fechaSiembra || "No definida",
-                  },
-                  {
-                    label: "Plantas estimadas",
-                    value: plantas.toLocaleString(),
-                  },
-                  {
-                    label: "Marco de plantación",
-                    value: "3 m × 2 m (6 m² por planta)",
-                  },
-                  {
-                    label: "Hoyos a preparar",
-                    value: plantas.toLocaleString(),
-                  },
-                  {
-                    label: "Abono orgánico req.",
-                    value: `${(plantas * 2).toLocaleString()} kg`,
-                  },
-                ].map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex items-center justify-between py-2 px-3 rounded-lg"
-                    style={{ background: "rgba(255,255,255,0.03)" }}
-                  >
-                    <span className="text-white/50 text-sm">{row.label}</span>
-                    <span className="text-white text-sm font-semibold">
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {cultivo.notas && (
-              <div>
-                <p className="text-white/40 text-xs uppercase tracking-wider mb-2">
-                  Observaciones
-                </p>
-                <div
-                  className="p-3 rounded-lg text-white/60 text-sm leading-relaxed"
-                  style={{
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(255,255,255,0.05)",
-                  }}
-                >
-                  {cultivo.notas}
-                </div>
-              </div>
-            )}
-
-            <p
-              className="text-white/20 text-xs pt-2"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
-            >
-              Generado por CultivaPreciso · {today}
+        {!cultivo.hectareas ? (
+          <div className="stat-card rounded-xl p-10 text-center">
+            <span className="text-3xl">📋</span>
+            <p className="text-white/40 text-sm mt-3">
+              Registra los datos de tu cultivo para generar el reporte.
             </p>
           </div>
+        ) : (
+          <div className="space-y-5">
+            {/* ── Reporte técnico ── */}
+            <div className="stat-card rounded-xl p-6 space-y-5">
+              <div
+                className="rep-divider flex items-start justify-between pb-4"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+              >
+                <div>
+                  <h3 className="font-serif text-white text-xl">
+                    {cultivo.nombre || "Mi Finca"}
+                  </h3>
+                  <p className="text-white/40 text-sm mt-0.5">
+                    Reporte técnico · {today}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="rep-active px-3 py-1 rounded-full text-xs font-bold text-[#4CAF7D] bg-[#2E6B45]/20">
+                    Activo
+                  </div>
+                  <button
+                    onClick={handleExportPDF}
+                    disabled={exporting || loadingNotes}
+                    className="rep-pdf flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-50"
+                    style={{
+                      background: "rgba(107,174,214,0.12)",
+                      border: "1px solid rgba(107,174,214,0.25)",
+                      color: "#6BAED6",
+                    }}
+                  >
+                    {exporting ? (
+                      <>
+                        <Loader2 size={15} className="animate-spin" />{" "}
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <FileDown size={15} /> Exportar PDF
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
 
-          {/* ── Bitácora ── */}
-          <div className="stat-card rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-5">
-              <Calendar size={16} className="text-[#CC9633]" />
-              <p className="text-white font-semibold text-sm">
-                Bitácora de campo
-              </p>
-              {!loadingNotes && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full ml-auto"
-                  style={{
-                    background: "rgba(255,255,255,0.05)",
-                    color: "rgba(255,255,255,0.3)",
-                  }}
-                >
-                  {sortedNotes.reduce((acc, [, arr]) => acc + arr.length, 0)}{" "}
-                  notas
-                </span>
+              {/* Tabla */}
+              <div>
+                <p className="text-white/40 text-xs uppercase tracking-wider mb-3">
+                  Datos del cultivo
+                </p>
+                <div className="space-y-1.5">
+                  {[
+                    {
+                      label: "Área total",
+                      value: `${cultivo.hectareas} hectáreas`,
+                    },
+                    {
+                      label: "Variedad",
+                      value: cultivo.variedad || "No especificada",
+                    },
+                    {
+                      label: "Región",
+                      value: cultivo.region || "No especificada",
+                    },
+                    {
+                      label: "Fecha de siembra",
+                      value: cultivo.fechaSiembra || "No definida",
+                    },
+                    {
+                      label: "Plantas estimadas",
+                      value: plantas.toLocaleString(),
+                    },
+                    {
+                      label: "Marco de plantación",
+                      value: "3 m × 2 m (6 m² por planta)",
+                    },
+                    {
+                      label: "Hoyos a preparar",
+                      value: plantas.toLocaleString(),
+                    },
+                    {
+                      label: "Abono orgánico req.",
+                      value: `${(plantas * 2).toLocaleString()} kg`,
+                    },
+                  ].map((row) => (
+                    <div
+                      key={row.label}
+                      className="rep-row flex items-center justify-between py-2 px-3 rounded-lg"
+                      style={{ background: "rgba(255,255,255,0.03)" }}
+                    >
+                      <span className="text-white/50 text-sm">{row.label}</span>
+                      <span className="text-white text-sm font-semibold">
+                        {row.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {cultivo.notas && (
+                <div>
+                  <p className="text-white/40 text-xs uppercase tracking-wider mb-2">
+                    Observaciones
+                  </p>
+                  <div
+                    className="rep-row p-3 rounded-lg text-white/60 text-sm leading-relaxed"
+                    style={{
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    {cultivo.notas}
+                  </div>
+                </div>
               )}
+
+              <p
+                className="rep-divider text-white/20 text-xs pt-2"
+                style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                Generado por CultivaPreciso · {today}
+              </p>
             </div>
 
-            {loadingNotes ? (
-              <div className="flex items-center justify-center py-10 gap-2 text-white/30">
-                <Loader2 size={16} className="animate-spin" />
-                <span className="text-sm">Cargando notas...</span>
-              </div>
-            ) : sortedNotes.length === 0 ? (
-              <div className="text-center py-10">
-                <span className="text-3xl">📓</span>
-                <p className="text-white/30 text-sm mt-3">
-                  Aún no hay notas registradas.
+            {/* ── Bitácora ── */}
+            <div className="stat-card rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <Calendar size={16} className="text-[#CC9633]" />
+                <p className="text-white font-semibold text-sm">
+                  Bitácora de campo
                 </p>
+                {!loadingNotes && (
+                  <span
+                    className="rep-count text-xs px-2 py-0.5 rounded-full ml-auto"
+                    style={{
+                      background: "rgba(255,255,255,0.05)",
+                      color: "rgba(255,255,255,0.3)",
+                    }}
+                  >
+                    {sortedNotes.reduce((acc, [, arr]) => acc + arr.length, 0)}{" "}
+                    notas
+                  </span>
+                )}
               </div>
-            ) : (
-              <div className="space-y-4">
-                {sortedNotes.map(([fecha, arr]) => {
-                  const fechaFormateada = new Date(
-                    fecha + "T12:00:00",
-                  ).toLocaleDateString("es-CO", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  });
-                  return (
-                    <div key={fecha}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-white/30 capitalize">
-                          {fechaFormateada}
-                        </span>
-                        <div
-                          className="flex-1 h-px"
-                          style={{ background: "rgba(255,255,255,0.05)" }}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        {arr.map((n) => (
+
+              {loadingNotes ? (
+                <div className="flex items-center justify-center py-10 gap-2 text-white/30">
+                  <Loader2 size={16} className="animate-spin" />
+                  <span className="text-sm">Cargando notas...</span>
+                </div>
+              ) : sortedNotes.length === 0 ? (
+                <div className="text-center py-10">
+                  <span className="text-3xl">📓</span>
+                  <p className="text-white/30 text-sm mt-3">
+                    Aún no hay notas registradas.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sortedNotes.map(([fecha, arr]) => {
+                    const fechaFormateada = new Date(
+                      fecha + "T12:00:00",
+                    ).toLocaleDateString("es-CO", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    });
+                    return (
+                      <div key={fecha}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs text-white/30 capitalize">
+                            {fechaFormateada}
+                          </span>
                           <div
-                            key={n.id}
-                            className="flex gap-3 p-3 rounded-lg"
-                            style={{
-                              background: "rgba(255,255,255,0.02)",
-                              borderLeft: `3px solid ${CATEGORY_COLORS[n.cat] || "#B3B3B3"}`,
-                            }}
-                          >
-                            <span
-                              className="text-xs px-2 py-0.5 rounded-full h-fit mt-0.5 shrink-0 font-medium"
+                            className="rep-line flex-1 h-px"
+                            style={{ background: "rgba(255,255,255,0.05)" }}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          {arr.map((n) => (
+                            <div
+                              key={n.id}
+                              className="rep-note flex gap-3 p-3 rounded-lg"
                               style={{
-                                background: `${CATEGORY_COLORS[n.cat]}18`,
-                                color: CATEGORY_COLORS[n.cat] || "#B3B3B3",
+                                background: "rgba(255,255,255,0.02)",
+                                borderLeft: `3px solid ${CATEGORY_COLORS[n.cat] || "#B3B3B3"}`,
                               }}
                             >
-                              {CATEGORY_LABELS[n.cat] || n.cat}
-                            </span>
-                            <p className="text-white/60 text-sm leading-relaxed">
-                              {n.text}
-                            </p>
-                          </div>
-                        ))}
+                              <span
+                                className="rep-pill text-xs px-2 py-0.5 rounded-full h-fit mt-0.5 shrink-0 font-medium"
+                                style={{
+                                  background: `${CATEGORY_COLORS[n.cat]}18`,
+                                  color: CATEGORY_COLORS[n.cat] || "#B3B3B3",
+                                }}
+                              >
+                                {CATEGORY_LABELS[n.cat] || n.cat}
+                              </span>
+                              <p className="text-white/60 text-sm leading-relaxed">
+                                {n.text}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

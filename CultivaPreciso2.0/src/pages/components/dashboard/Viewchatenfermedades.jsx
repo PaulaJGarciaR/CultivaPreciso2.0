@@ -18,7 +18,7 @@ function TypingDots() {
   return (
     <div className="flex items-end gap-2 mb-3">
       <div
-        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+        className="chat-av-ai w-7 h-7 rounded-full flex items-center justify-center shrink-0"
         style={{ background: "rgba(76,175,125,0.12)", border: "1px solid rgba(76,175,125,0.25)" }}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="#4CAF7D" strokeWidth="2" className="w-3.5 h-3.5">
@@ -26,7 +26,7 @@ function TypingDots() {
         </svg>
       </div>
       <div
-        className="px-4 py-3 rounded-2xl rounded-bl-sm"
+        className="chat-msg-ai px-4 py-3 rounded-2xl rounded-bl-sm"
         style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
       >
         <div className="flex gap-1 items-center h-4">
@@ -61,7 +61,7 @@ function Bubble({ msg }) {
   return (
     <div className={`flex items-end gap-2 mb-3 ${isUser ? "flex-row-reverse" : ""}`}>
       <div
-        className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+        className={`${isUser ? "chat-av-user" : "chat-av-ai"} w-6 h-6 rounded-full flex items-center justify-center shrink-0`}
         style={
           isUser
             ? { background: "rgba(204,150,51,0.15)", border: "1px solid rgba(204,150,51,0.3)" }
@@ -84,13 +84,13 @@ function Bubble({ msg }) {
           <img
             src={msg.imageUrl}
             alt="uploaded"
-            className="rounded-xl max-h-32 object-cover"
+            className="chat-img rounded-xl max-h-32 object-cover"
             style={{ border: "1px solid rgba(255,255,255,0.1)" }}
           />
         )}
         {msg.text && (
           <div
-            className="px-3 py-2.5 text-xs leading-relaxed whitespace-pre-wrap"
+            className={`${isUser ? "chat-msg-user" : "chat-msg-ai"} px-3 py-2.5 text-xs leading-relaxed whitespace-pre-wrap"`}
             style={
               isUser
                 ? {
@@ -116,7 +116,7 @@ function Bubble({ msg }) {
             </div>
           </div>
         )}
-        <span className="text-xs px-0.5" style={{ color: "rgba(255,255,255,0.18)" }}>
+        <span className="chat-time text-xs px-0.5" style={{ color: "rgba(255,255,255,0.18)" }}>
           {msg.time}
         </span>
       </div>
@@ -340,12 +340,45 @@ REGLAS DE RESPUESTA:
         @keyframes chatBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
         @keyframes chatPop { from{opacity:0;transform:scale(0.92) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
         .chat-window { animation: chatPop 0.25s ease forwards; }
+        /* ── Tema claro del chat ── */
+.theme-light main .chat-panel.chat-window{background:#FFFFFF!important;border-color:rgba(46,107,69,0.16)!important;box-shadow:0 20px 60px rgba(47,40,31,0.18),0 0 0 1px rgba(46,107,69,0.06)!important;}
+.theme-light .chat-panel .chat-head{background:#F7F5EC!important;border-bottom-color:rgba(46,107,69,0.12)!important;}
+.theme-light .chat-panel .chat-head-icon{background:rgba(46,107,69,0.10)!important;border-color:rgba(46,107,69,0.26)!important;}
+.theme-light .chat-panel .chat-head-icon svg,
+.theme-light .chat-panel .chat-av-ai svg{stroke:#2E6B45;}
+.theme-light .chat-panel .chat-av-ai{background:rgba(46,107,69,0.10)!important;border-color:rgba(46,107,69,0.28)!important;}
+.theme-light .chat-panel .chat-av-user{background:rgba(204,150,51,0.16)!important;border-color:rgba(204,150,51,0.4)!important;}
+.theme-light .chat-panel .chat-av-user svg{stroke:#A87414;}
+.theme-light .chat-panel .chat-msg-ai{background:#F1EEE2!important;border-color:rgba(46,107,69,0.12)!important;color:#4F4638!important;}
+.theme-light .chat-panel .chat-msg-user{background:rgba(204,150,51,0.14)!important;border-color:rgba(204,150,51,0.38)!important;color:#2F281F!important;}
+.theme-light .chat-panel .chat-img{border-color:rgba(46,107,69,0.2)!important;}
+.theme-light .chat-panel .chat-time{color:rgba(47,40,31,0.38)!important;}
+.theme-light main .chat-panel .chat-title{color:#1F3D2B!important;}
+.theme-light .chat-panel .chat-sub{color:rgba(47,40,31,0.5)!important;}
+.theme-light main .chat-panel .chat-close{color:rgba(47,40,31,0.4)!important;}
+.theme-light main .chat-panel .chat-close:hover{color:#2E6B45!important;}
+.theme-light .chat-panel .chat-disc-text{color:rgba(47,40,31,0.6)!important;}
+.theme-light .chat-panel .chat-pending{background:#F7F5EC!important;border-color:rgba(46,107,69,0.16)!important;}
+.theme-light .chat-panel .chat-pending-text{color:rgba(47,40,31,0.6)!important;}
+.theme-light main .chat-panel .chat-pending-x{color:rgba(47,40,31,0.4)!important;}
+.theme-light main .chat-panel .chat-pending-x:hover{color:#DC2626!important;}
+.theme-light .chat-panel .chat-input-box{background:#F7F5EC!important;border-color:rgba(46,107,69,0.18)!important;}
+.theme-light .chat-panel .chat-upload{border-bottom-color:rgba(46,107,69,0.12)!important;}
+.theme-light .chat-panel .chat-upload:hover{background:rgba(46,107,69,0.06)!important;}
+.theme-light .chat-panel .chat-upload-fg{color:#7A6F5F!important;}
+.theme-light .chat-panel .chat-input{color:#2F281F!important;}
+.theme-light .chat-panel .chat-input::placeholder{color:rgba(47,40,31,0.4);}
+.theme-light .chat-panel .chat-send[data-empty="true"]{background:rgba(46,107,69,0.10)!important;}
+.theme-light .chat-panel .chat-send[data-empty="true"] svg{stroke:#7A6F5F;}
+.theme-light .chat-fab{box-shadow:0 8px 28px rgba(47,40,31,0.25),0 0 0 1px rgba(46,107,69,0.15)!important;}
+.theme-light .chat-fab.chat-fab-open{background:#FFFFFF!important;border-color:rgba(46,107,69,0.25)!important;}
+.theme-light .chat-fab.chat-fab-open svg{stroke:#2F281F;}
       `}</style>
 
       {/* ── Panel del chat ── */}
       {open && (
         <div
-          className="chat-window fixed bottom-20 right-5 z-50 flex flex-col rounded-2xl overflow-hidden shadow-2xl"
+          className="chat-panel chat-window fixed bottom-20 right-5 z-50 flex flex-col rounded-2xl overflow-hidden shadow-2xl"
           style={{
             width: "480px",
             height: "650px",
@@ -356,7 +389,7 @@ REGLAS DE RESPUESTA:
         >
           {/* Header del chat */}
           <div
-            className="flex items-center justify-between px-4 py-3 shrink-0"
+            className="chat-head flex items-center justify-between px-4 py-3 shrink-0"
             style={{
               background: "rgba(255,255,255,0.03)",
               borderBottom: "1px solid rgba(255,255,255,0.07)",
@@ -364,7 +397,7 @@ REGLAS DE RESPUESTA:
           >
             <div className="flex items-center gap-2.5">
               <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center"
+                className="chat-head-icon w-8 h-8 rounded-xl flex items-center justify-center"
                 style={{ background: "rgba(76,175,125,0.12)", border: "1px solid rgba(76,175,125,0.22)" }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="#4CAF7D" strokeWidth="2" className="w-4 h-4">
@@ -372,18 +405,18 @@ REGLAS DE RESPUESTA:
                 </svg>
               </div>
               <div>
-                <p className="text-white text-xs font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <p className="chat-title text-white text-xs font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>
                   Diagnóstico IA
                 </p>
                 <div className="flex items-center gap-1">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>En línea</span>
+                  <span className="chat-sub text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>En línea</span>
                 </div>
               </div>
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="text-white/30 hover:text-white/70 transition-colors"
+              className="chat-close text-white/30 hover:text-white/70 transition-colors"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                 <line x1="18" y1="6" x2="6" y2="18" />
@@ -404,7 +437,7 @@ REGLAS DE RESPUESTA:
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
+            <p className="chat-disc-text text-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
               Análisis orientativo — consulta con un especialista.
             </p>
           </div>
@@ -419,14 +452,14 @@ REGLAS DE RESPUESTA:
           {/* Preview imagen pendiente */}
           {pendingImg && (
             <div
-              className="flex items-center gap-2 px-3 py-2 mx-3 mb-2 rounded-xl shrink-0"
+              className="chat-pending flex items-center gap-2 px-3 py-2 mx-3 mb-2 rounded-xl shrink-0"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
               <img src={pendingImg.url} alt="preview" className="w-10 h-10 object-cover rounded-lg shrink-0" />
-              <p className="text-xs flex-1" style={{ color: "rgba(255,255,255,0.45)" }}>
+              <p className="chat-pending-text text-xs flex-1" style={{ color: "rgba(255,255,255,0.45)" }}>
                 Imagen lista · agrega texto opcional
               </p>
-              <button onClick={() => setPendingImg(null)} className="text-white/25 hover:text-red-400">
+              <button onClick={() => setPendingImg(null)} className="chat-pending-x text-white/25 hover:text-red-400">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -436,7 +469,7 @@ REGLAS DE RESPUESTA:
 
           {/* Input área */}
           <div
-            className="shrink-0 mx-3 mb-3 rounded-xl overflow-hidden"
+            className="chat-input-box shrink-0 mx-3 mb-3 rounded-xl overflow-hidden"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
@@ -444,20 +477,20 @@ REGLAS DE RESPUESTA:
           >
             {/* Zona de subida */}
             <div
-              className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-white/5 transition-colors"
+              className="chat-upload flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-white/5 transition-colors"
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
                 background: dragOver ? "rgba(76,175,125,0.1)" : "transparent",
               }}
               onClick={() => fileRef.current?.click()}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="chat-upload-fg w-4 h-4"
                 style={{ color: "rgba(255,255,255,0.28)" }}>
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <circle cx="8.5" cy="8.5" r="1.5" />
                 <polyline points="21 15 16 10 5 21" />
               </svg>
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.28)" }}>
+              <span className="chat-upload-fg text-xs" style={{ color: "rgba(255,255,255,0.28)" }}>
                 Clic o arrastra una imagen aquí
               </span>
               <input
@@ -477,13 +510,14 @@ REGLAS DE RESPUESTA:
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
                 placeholder="Comenta sobre la imagen…"
-                className="flex-1 bg-transparent text-xs outline-none"
+                className="chat-input flex-1 bg-transparent text-xs outline-none"
                 style={{ color: "rgba(255,255,255,0.7)", caretColor: "#4CAF7D" }}
               />
               <button
                 onClick={send}
                 disabled={loading || (!pendingImg && !inputText.trim())}
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0"
+                data-empty={!pendingImg && !inputText.trim()}
+                className="chat-send w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0"
                 style={{
                   background:
                     pendingImg || inputText.trim() ? "#2E6B45" : "rgba(255,255,255,0.05)",
@@ -504,7 +538,7 @@ REGLAS DE RESPUESTA:
       {/* ── FAB (botón flotante) ── */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all hover:scale-110 active:scale-95"
+        className={`chat-fab ${open ? "chat-fab-open" : ""} fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all hover:scale-110 active:scale-95`}
         style={{
           background: open
             ? "rgba(26,17,13,0.95)"
