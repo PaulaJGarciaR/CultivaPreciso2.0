@@ -1,5 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function mensajeError(status) {
+  if (status === 503 || status === 500)
+    return "El servicio de IA está saturado en este momento. Intenta de nuevo en unos minutos.";
+  if (status === 429)
+    return "Se alcanzó el límite de consultas. Espera un minuto e intenta de nuevo.";
+  if (status === 400 || status === 401 || status === 403)
+    return "Hay un problema de configuración con la IA. Avisa al administrador.";
+  if (status === 0)
+    return "No hay conexión a internet. Revisa tu conexión e intenta de nuevo.";
+  return "Intenta de nuevo en un momento.";
+}
+
 function TypingDots() {
   return (
     <div className="flex items-end gap-2 mb-3">
@@ -187,45 +201,44 @@ REGLAS DE RESPUESTA:
 - Proporciona información práctica y aplicable
 - Si recomiendas productos o tratamientos, menciona que siempre es mejor consultar con un especialista local`;
 
-      for (const apiKey of apiKeys) {
-        try {
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    role: "user",
-                    parts: [{ text: txtSnap }],
-                  },
-                ],
-                systemInstruction: {
-                  parts: [{ text: systemPrompt }],
-                },
-                generationConfig: {
-                  maxOutputTokens: 900,
-                  temperature: 0.45,
-                  topP: 0.85,
-                },
-              }),
-            }
-          );
+      const MODELOS = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];
+      let keyIndex = 0;
 
-          const parsed = await res.json().catch(() => ({}));
-          if (!res.ok || parsed.error) {
-            throw new Error(parsed.error?.message || `Error HTTP ${res.status}`);
+      for (const modelo of MODELOS) {
+        for (let intento = 0; intento < 3; intento++) {
+          const apiKey = apiKeys[keyIndex % apiKeys.length];
+          keyIndex++;
+          try {
+            const res = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  contents: [{ role: "user", parts: [{ text: txtSnap }] }],
+                  systemInstruction: { parts: [{ text: systemPrompt }] },
+                  generationConfig: { maxOutputTokens: 2048 },
+                }),
+              }
+            );
+            const parsed = await res.json().catch(() => ({}));
+            if (res.ok && !parsed.error) {
+              data = parsed;
+              break;
+            }
+            lastError = { status: res.status };
+            console.warn(`[${modelo}] intento ${intento + 1} falló (HTTP ${res.status}):`, parsed.error?.message);
+          } catch (e) {
+            lastError = { status: 0 };
+            console.warn(`[${modelo}] intento ${intento + 1} sin conexión:`, e.message);
           }
-          data = parsed;
-          break;
-        } catch (e) {
-          lastError = e;
+          if (intento < 2) await esperar(1000 * 2 ** intento);
         }
+        if (data) break;
       }
-      
+
       if (!data) {
-        throw lastError || new Error("No se pudo obtener respuesta de la IA");
+        throw new Error(mensajeError(lastError?.status));
       }
       
       if (data.error) {
