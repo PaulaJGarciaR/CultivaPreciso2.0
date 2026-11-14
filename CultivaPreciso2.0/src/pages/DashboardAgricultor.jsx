@@ -285,7 +285,7 @@ export default function DashboardAgricultor({ user }) {
       case "reports":
         return <ViewReports cultivo={cultivo} user={user} />;
       case "calendar":
-        return <ViewCalendar cultivo={cultivo} user={user} />;
+        return <ViewCalendar cultivo={cultivo}  isDark={!isLightTheme} user={user} />;
       case "enfermedades":
         return <ViewEnfermedades isDark={!isLightTheme} />;
       case "perfil":
@@ -466,7 +466,7 @@ export default function DashboardAgricultor({ user }) {
               src={logoCultivaPreciso}
               alt=""
               className="w-20 h-20 object-contain select-none pointer-events-none"
-              style={{ opacity: isLightTheme ? 0.07 : 0.06 }}
+              style={{  opacity: isLightTheme ? 0.50 : 0.10 }}
             />
           </div>
         )}

@@ -21,7 +21,7 @@ const validators = {
 function SectionCard({ title, icon, children }) {
   return (
     <div
-      className="rounded-2xl p-6 flex flex-col gap-5"
+      className="prf-card rounded-2xl p-6 flex flex-col gap-5"
       style={{
         background: "rgba(255,255,255,0.03)",
         border: "1px solid rgba(255,255,255,0.07)",
@@ -69,7 +69,7 @@ function Input({
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
-        className={`w-full ${icon ? "pl-10" : "pl-4"} ${rightIcon ? "pr-10" : "pr-4"} 
+        className={`prf-input ${disabled ? "prf-input-off" : ""} w-full ${icon ? "pl-10" : "pl-4"} ${rightIcon ? "pr-10" : "pr-4"} 
           h-11 rounded-xl text-sm text-white placeholder:text-white/20 outline-none transition-colors
           ${
             disabled
@@ -140,7 +140,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
         icon: "warning",
         title: "Datos inválidos",
         text: "Nombre y apellido deben tener al menos 2 caracteres.",
-        background: "#1A110D",
+        ...swalTheme(),
         color: "#fff",
         confirmButtonColor: "#CC9633",
       });
@@ -169,7 +169,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
         title: "Información actualizada",
         timer: 1500,
         showConfirmButton: false,
-        background: "#1A110D",
+        ...swalTheme(),
         color: "#fff",
       });
     } catch (e) {
@@ -177,7 +177,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
         icon: "error",
         title: "Error",
         text: e.message,
-        background: "#1A110D",
+        ...swalTheme(),
         color: "#fff",
         confirmButtonColor: "#CC9633",
       });
@@ -196,7 +196,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
       cancelButtonText: "Cancelar",
       confirmButtonColor: "#EF4444",
       cancelButtonColor: "#CC9633",
-      background: "#1A110D",
+      ...swalTheme(),
       color: "#fff",
     });
     if (!confirmed.isConfirmed) return;
@@ -205,7 +205,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
       return Swal.fire({
         icon: "warning",
         title: "Ingresa tu contraseña para confirmar",
-        background: "#1A110D",
+        ...swalTheme(),
         color: "#fff",
         confirmButtonColor: "#CC9633",
       });
@@ -224,7 +224,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
         title: "Cuenta eliminada",
         timer: 1500,
         showConfirmButton: false,
-        background: "#1A110D",
+        ...swalTheme(),
         color: "#fff",
       });
       navigate("/");
@@ -239,7 +239,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
         icon: "error",
         title: "Error",
         text: msg,
-        background: "#1A110D",
+        ...swalTheme(),
         color: "#fff",
         confirmButtonColor: "#CC9633",
       });
@@ -247,6 +247,10 @@ export default function ViewPerfil({ user, userData, setUserData }) {
       setDeleting(false);
     }
   };
+  const swalTheme = () =>
+  document.querySelector(".theme-light")
+    ? { background: "#FFFFFF", color: "#2F281F" }
+    : { background: "#1A110D", color: "#fff" };
 
   const displayName =
     `${firstName} ${middleName ? middleName + " " : ""}${lastName}${secondSurname ? " " + secondSurname : ""}`.trim() ||
@@ -258,6 +262,19 @@ export default function ViewPerfil({ user, userData, setUserData }) {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6 pb-10">
+      <style>{`
+  .theme-light main div.prf-card{background-color:#FFFFFF!important;border-color:rgba(46,107,69,0.12)!important;box-shadow:0 8px 24px rgba(47,40,31,0.06);}
+  .theme-light main input.prf-input{background-color:#F7F5EC!important;border-color:rgba(46,107,69,0.18)!important;}
+  .theme-light main input.prf-input:focus{border-color:rgba(46,107,69,0.6)!important;}
+  .theme-light main input.prf-input::placeholder{color:rgba(47,40,31,0.4)!important;}
+  .theme-light main input.prf-input-off{background-color:rgba(46,107,69,0.05)!important;border-color:rgba(46,107,69,0.08)!important;color:rgba(47,40,31,0.4)!important;}
+  .theme-light main .prf-chip{background-color:rgba(46,107,69,0.08)!important;color:#4F4638!important;}
+  .theme-light main .prf-eye{color:rgba(47,40,31,0.4)!important;}
+  .theme-light main .prf-eye:hover{color:#2E6B45!important;}
+  .theme-light main button.prf-save{color:#FFFFFF!important;}
+  .theme-light main button.prf-danger{color:#DC2626!important;}
+`}</style>
+
       {/* Avatar + nombre */}
       <div className="flex items-center gap-5">
         <div className="w-20 h-20 rounded-full bg-[#CC9633]/20 flex items-center justify-center shrink-0">
@@ -280,7 +297,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
           </p>
           {isGoogle && (
             <span
-              className="text-xs mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
+              className="prf-chip text-xs mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
               style={{
                 background: "rgba(255,255,255,0.06)",
                 color: "rgba(255,255,255,0.5)",
@@ -356,7 +373,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
         <button
           onClick={handleSaveInfo}
           disabled={savingInfo}
-          className="self-end flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium
+          className="prf-save self-end flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium
             bg-[#2E6B45] hover:bg-[#256038] disabled:opacity-50 text-white transition-colors"
         >
           <Save size={15} />
@@ -366,7 +383,25 @@ export default function ViewPerfil({ user, userData, setUserData }) {
 
       <SectionCard
         title="Mi cultivo guardado"
-        icon={<span className="text-base">🌱</span>}
+        icon={
+          <span className="text-base">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3" />
+              <path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4" />
+              <path d="M5 21h14" />
+            </svg>
+          </span>
+        }
       >
         {loadingCultivo ? (
           <p className="text-[#2F281F]/50 text-sm">
@@ -467,7 +502,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
               rightIcon={
                 <button
                   onClick={() => setShowDeletePass(!showDeletePass)}
-                  className="text-white/30 hover:text-white transition-colors"
+                  className="prf-eye text-white/30 hover:text-white transition-colors"
                 >
                   {showDeletePass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -478,7 +513,7 @@ export default function ViewPerfil({ user, userData, setUserData }) {
         <button
           onClick={handleDeleteAccount}
           disabled={deleting}
-          className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium
+          className="prf-danger self-start flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium
             bg-red-500/10 hover:bg-red-500/20 border border-red-500/20
             text-red-400 disabled:opacity-50 transition-colors"
         >

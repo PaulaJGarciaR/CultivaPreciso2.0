@@ -8,21 +8,26 @@ const NOTICIAS = {
   colombia: [
     {
       titulo: "La hora del cacao",
-      texto: "Ante un consumo de chocolate siempre en crecimiento, lo sucedido en los últimos años con los precios y la producción alrededor del mundo ilustra las extraordinarias oportunidades para Colombia en este sector.",
+      texto:
+        "Ante un consumo de chocolate siempre en crecimiento, lo sucedido en los últimos años con los precios y la producción alrededor del mundo ilustra las extraordinarias oportunidades para Colombia en este sector.",
       fuente: "La Republica",
       fecha: "2026",
       url: "https://www.larepublica.co/analisis/louis-kleyn-4225994/la-hora-del-cacao-4401106",
     },
     {
-      titulo: "Monitoreo de predios con agricultura de precisión en el cultivo de cacao",
-      texto: "La tecnificación del campo ha puesto en las manos de los agricultores una amplia variedad de herramientas",
+      titulo:
+        "Monitoreo de predios con agricultura de precisión en el cultivo de cacao",
+      texto:
+        "La tecnificación del campo ha puesto en las manos de los agricultores una amplia variedad de herramientas",
       fuente: "CEDAIT",
       fecha: "2021",
       url: "https://www.udea.edu.co/wps/wcm/connect/udea/c1bc93ee-4e52-4788-b1bd-c2102faaacba/Boleti%CC%81n_Monitoreo_predios_cacao.pdf?MOD=AJPERES&CVID=nGbnYXf",
     },
     {
-      titulo: "Cacao por la vida: comunidades cambian cultivos de uso ilícito por esperanza en el Pacífico",
-      texto: "En zonas rurales de Tumaco, familias apuestan por el cacao como alternativa económica y camino hacia la paz, dejando atrás economías ilegales y reconstruyendo su territorio.",
+      titulo:
+        "Cacao por la vida: comunidades cambian cultivos de uso ilícito por esperanza en el Pacífico",
+      texto:
+        "En zonas rurales de Tumaco, familias apuestan por el cacao como alternativa económica y camino hacia la paz, dejando atrás economías ilegales y reconstruyendo su territorio.",
       fuente: "Radio Nacional de Colombia",
       fecha: "2024",
       url: "https://www.radionacional.co/emisoras-de-paz/cacao-por-la-vida-comunidades-cambian-cultivos-de-uso-ilicito-por-esperanza-en-el",
@@ -30,22 +35,28 @@ const NOTICIAS = {
   ],
   mundo: [
     {
-      titulo: "Agricultura de precisión en Italia: innovación, casos prácticos y retos para el futuro",
-      texto: "Italia se está convirtiendo en un punto de referencia en la Agricultura 4.0 , donde las tecnologías digitales y la sostenibilidad se entrelazan. El mercado alcanzó los 2500 millones de euros en 2023 , con una tasa de crecimiento anual del 19 %. No se trata de una tendencia aislada: a escala mundial, se espera que el sector crezca una media del 10,7 % anual hasta 2031.",
+      titulo:
+        "Agricultura de precisión en Italia: innovación, casos prácticos y retos para el futuro",
+      texto:
+        "Italia se está convirtiendo en un punto de referencia en la Agricultura 4.0 , donde las tecnologías digitales y la sostenibilidad se entrelazan. El mercado alcanzó los 2500 millones de euros en 2023 , con una tasa de crecimiento anual del 19 %. No se trata de una tendencia aislada: a escala mundial, se espera que el sector crezca una media del 10,7 % anual hasta 2031.",
       fuente: "Ministerio de Agricultura de Italia",
       fecha: "2026",
       url: "https://opportunitaly.gov.it/es-ES/news-and-media/agriculture-precision-italy-innovation",
     },
     {
-      titulo: "¿Cómo y por qué migrar de la agricultura tradicional a la agricultura de precisión?",
-      texto: "Decenas de productores trabajan de manera más eficiente, mejorando la calidad de sus cultivos y bajando los costos en medio de la crisis económica, al trabajar en conjunto con un TCU de la Escuela de Ingeniería de Biosistemas",
+      titulo:
+        "¿Cómo y por qué migrar de la agricultura tradicional a la agricultura de precisión?",
+      texto:
+        "Decenas de productores trabajan de manera más eficiente, mejorando la calidad de sus cultivos y bajando los costos en medio de la crisis económica, al trabajar en conjunto con un TCU de la Escuela de Ingeniería de Biosistemas",
       fuente: "Universidad de Costa Rica",
       fecha: "2022",
       url: "https://www.ucr.ac.cr/noticias/2022/7/11/como-y-por-que-migrar-de-la-agricultura-tradicional-a-la-agricultura-de-precision.html",
     },
     {
-      titulo: "Drones, innovación y sostenibilidad: más de 240 productores fortalecen la agricultura de precisión en Ecuador con apoyo del PNUD",
-      texto: "Más de 240 productores, productoras y técnicos agrícolas de distintas provincias del país fortalecieron sus capacidades técnicas y operativas para el uso seguro y normado de drones aplicados a la agricultura de precisión, contribuyendo a una producción más eficiente que cuida la salud de las personas y el ambiente.",
+      titulo:
+        "Drones, innovación y sostenibilidad: más de 240 productores fortalecen la agricultura de precisión en Ecuador con apoyo del PNUD",
+      texto:
+        "Más de 240 productores, productoras y técnicos agrícolas de distintas provincias del país fortalecieron sus capacidades técnicas y operativas para el uso seguro y normado de drones aplicados a la agricultura de precisión, contribuyendo a una producción más eficiente que cuida la salud de las personas y el ambiente.",
       fuente: "PNUD Ecuador",
       fecha: "2026",
       url: "https://www.undp.org/es/ecuador/noticias/drones-innovacion-y-sostenibilidad-mas-de-240-productores-fortalecen-la-agricultura-de-precision-en-ecuador-con-apoyo-del-pnud",
@@ -53,22 +64,27 @@ const NOTICIAS = {
   ],
   catatumbo: [
     {
-      titulo: "Catatumbo: Gobierno nacional fortalece el sector agropecuario con inversión, tierras y apoyo financiero",
-      texto: "En el marco del estado de conmoción interior decretado para la región del Catatumbo, el Gobierno nacional ha intensificado sus acciones de desarrollo para el sector agropecuario, enfocándose en brindar apoyo integral a las comunidades rurales, campesinas y étnicas.",
+      titulo:
+        "Catatumbo: Gobierno nacional fortalece el sector agropecuario con inversión, tierras y apoyo financiero",
+      texto:
+        "En el marco del estado de conmoción interior decretado para la región del Catatumbo, el Gobierno nacional ha intensificado sus acciones de desarrollo para el sector agropecuario, enfocándose en brindar apoyo integral a las comunidades rurales, campesinas y étnicas.",
       fuente: "Radio Nacional del Colombia",
       fecha: "2025",
       url: "https://www.radionacional.co/noticias-colombia/catatumbo-apoyo-financiero-al-sector-agropecuario",
     },
     {
       titulo: "Cacao, Catatumbo, ciencia y paz",
-      texto: "Ocaña, Norte de Santander. 03 de septiembre de 2025. En territorios como el Catatumbo, donde la historia reciente está marcada por el conflicto armado, el abandono estatal y las economías ilícitas, el cacao se ha convertido en mucho más que un cultivo. Hoy es símbolo de resistencia, memoria y dignidad para cientos de familias campesinas que, a través de este grano, han encontrado una alternativa productiva y sostenible.",
+      texto:
+        "Ocaña, Norte de Santander. 03 de septiembre de 2025. En territorios como el Catatumbo, donde la historia reciente está marcada por el conflicto armado, el abandono estatal y las economías ilícitas, el cacao se ha convertido en mucho más que un cultivo. Hoy es símbolo de resistencia, memoria y dignidad para cientos de familias campesinas que, a través de este grano, han encontrado una alternativa productiva y sostenible.",
       fuente: "Agrosavia",
       fecha: "2025",
       url: "https://www.agrosavia.co/noticias/cacao-catatumbo-ciencia-y-paz",
     },
     {
-      titulo: "Cacao el Corazón del Catatumbo, una senda de transformación del territorio",
-      texto: "“Cacao el Corazón del Catatumbo”, es el nombre dado por las 300 familias participantes del proyecto que hoy deja aportes a la reactivación económica y productiva de la cadena de cacao en esta subregión de Colombia, integrando los enfoques étnico y de género como elementos clave para la transformación territorial. ",
+      titulo:
+        "Cacao el Corazón del Catatumbo, una senda de transformación del territorio",
+      texto:
+        "“Cacao el Corazón del Catatumbo”, es el nombre dado por las 300 familias participantes del proyecto que hoy deja aportes a la reactivación económica y productiva de la cadena de cacao en esta subregión de Colombia, integrando los enfoques étnico y de género como elementos clave para la transformación territorial. ",
       fuente: "FAO",
       fecha: "2024",
       url: "https://www.fao.org/colombia/noticias/detail-events/fr/c/1727520/",
@@ -77,9 +93,9 @@ const NOTICIAS = {
 };
 
 const CATEGORIAS = [
-  { id: "colombia",  label: "Colombia",   color: "#2E6B45", emoji: "🇨🇴" },
-  { id: "mundo",     label: "Mundo",      color: "#5B9BD5", emoji: "🌍" },
-  { id: "catatumbo", label: "Catatumbo",  color: "#CC9633", emoji: "🌿" },
+  { id: "colombia", label: "Colombia", color: "#2E6B45" },
+  { id: "mundo", label: "Mundo", color: "#5B9BD5" },
+  { id: "catatumbo", label: "Catatumbo", color: "#CC9633" },
 ];
 
 // ─────────────────────────────────────────────
@@ -91,7 +107,7 @@ function NoticiaCard({ noticia, color, tipo, emoji }) {
       href={noticia.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="rounded-2xl p-5 flex flex-col gap-3 transition-all duration-200 cursor-pointer no-underline block"
+      className="noti-card rounded-2xl p-5 flex flex-col gap-3 transition-all duration-200 cursor-pointer no-underline"
       style={{
         background: "rgba(255,255,255,0.03)",
         border: `1px solid ${color}22`,
@@ -120,7 +136,7 @@ function NoticiaCard({ noticia, color, tipo, emoji }) {
         >
           {emoji} {tipo}
         </span>
-        <span className="text-white/35 text-xs">{noticia.fecha}</span>
+        <span className="noti-meta text-white/35 text-xs">{noticia.fecha}</span>
       </div>
 
       {/* Título */}
@@ -135,14 +151,21 @@ function NoticiaCard({ noticia, color, tipo, emoji }) {
 
       {/* Fuente + ícono enlace */}
       <div
-        className="flex items-center justify-between pt-2"
+        className="noti-divider flex items-center justify-between pt-2"
         style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
       >
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px]" style={{ color: `${color}99` }}>📰</span>
-          <span className="text-white/30 text-xs">{noticia.fuente}</span>
+          <span
+            className="noti-accent text-[10px]"
+            style={{ color: `${color}99` }}
+          >
+            📰
+          </span>
+          <span className="noti-meta text-white/30 text-xs">
+            {noticia.fuente}
+          </span>
         </div>
-        <span className="text-xs font-semibold" style={{ color }}>
+        <span className="noti-accent text-xs font-semibold" style={{ color }}>
           Leer →
         </span>
       </div>
@@ -161,6 +184,16 @@ export default function ViewNoticias() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
+      <style>{`
+  .theme-light main a.noti-card{background-color:#FFFFFF!important;box-shadow:0 8px 24px rgba(47,40,31,0.06);}
+  .theme-light main a.noti-card:hover{box-shadow:0 14px 32px rgba(47,40,31,0.12);}
+  .theme-light main .noti-divider{border-top-color:rgba(46,107,69,0.14)!important;}
+  .theme-light main .noti-meta{color:rgba(47,40,31,0.55)!important;}
+  .theme-light main .noti-tab-off{color:#6B5F4D!important;background-color:#FFFFFF!important;}
+  .theme-light main .noti-tab-off:hover{color:#2E6B45!important;}
+  .theme-light main .noti-accent{filter:brightness(0.78) saturate(1.1);}
+  .theme-light main .noti-subtittle{color:#4b4b4b;}
+`}</style>
 
       <SectionHeader
         title="Información y Noticias"
@@ -171,7 +204,8 @@ export default function ViewNoticias() {
       <div
         className="rounded-3xl p-7 overflow-hidden relative"
         style={{
-          background: "linear-gradient(135deg, rgba(46,107,69,0.16), rgba(204,150,51,0.10))",
+          background:
+            "linear-gradient(135deg, rgba(46,107,69,0.16), rgba(204,150,51,0.10))",
           border: "1px solid rgba(46,107,69,0.18)",
         }}
       >
@@ -182,11 +216,30 @@ export default function ViewNoticias() {
           <h2 className="font-serif text-white text-3xl leading-tight">
             Noticias y aprendizaje para CultivaPreciso
           </h2>
-          <p className="text-white/55 text-sm mt-3 leading-relaxed">
-            Haz clic en cualquier noticia para leer el artículo completo en la fuente original.
+          <p className="noti-subtittle   text-white/55 text-sm mt-3 leading-relaxed">
+            Haz clic en cualquier noticia para leer el artículo completo en la
+            fuente original.
           </p>
         </div>
-        <div className="absolute right-6 bottom-4 text-7xl opacity-20">📰</div>
+        <div className="absolute right-6 bottom-4 text-7xl opacity-20">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="60"
+            height="60"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+
+          >
+            <path d="M15 18h-5" />
+            <path d="M18 14h-8" />
+            <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2" />
+            <rect width="8" height="4" x="10" y="6" rx="1" />
+          </svg>
+        </div>
       </div>
 
       {/* ───────── TABS ───────── */}
@@ -195,7 +248,7 @@ export default function ViewNoticias() {
           <button
             key={cat.id}
             onClick={() => setCategoriaActiva(cat.id)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+            className={`${categoriaActiva === cat.id ? "" : "noti-tab-off"} flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200`}
             style={
               categoriaActiva === cat.id
                 ? {
@@ -239,10 +292,11 @@ export default function ViewNoticias() {
       >
         <span className="text-xl">🔗</span>
         <p className="text-white/40 text-xs leading-relaxed">
-          Todas las noticias enlazan a sus fuentes originales. Haz clic en <strong className="text-white/50">Leer →</strong> para abrir el artículo completo en una nueva pestaña.
+          Todas las noticias enlazan a sus fuentes originales. Haz clic en{" "}
+          <strong className="text-white/50">Leer →</strong> para abrir el
+          artículo completo en una nueva pestaña.
         </p>
       </div>
-
     </div>
   );
 }

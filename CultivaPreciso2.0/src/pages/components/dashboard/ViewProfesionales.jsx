@@ -39,7 +39,7 @@ function ProfesionalCard({ prof, onClick }) {
   return (
     <div
       onClick={() => onClick(prof)}
-      className="rounded-2xl p-5 flex flex-col gap-3 cursor-pointer transition-all hover:scale-[1.01]"
+      className="prof-card rounded-2xl p-5 flex flex-col gap-3 cursor-pointer transition-all hover:scale-[1.01]"
       style={{
         background: "rgba(255,255,255,0.03)",
         border: "1px solid rgba(255,255,255,0.07)",
@@ -52,7 +52,7 @@ function ProfesionalCard({ prof, onClick }) {
           <h3 className="text-white font-semibold text-sm truncate">
             {prof.firstName} {prof.lastName}
           </h3>
-          <p className="text-[#CC9633] text-xs mt-0.5 truncate">{prof.titulo || "Profesional"}</p>
+          <p className="prof-gold text-[#CC9633] text-xs mt-0.5 truncate">{prof.titulo || "Profesional"}</p>
           {prof.institucion && (
             <p className="text-white/30 text-xs truncate">{prof.institucion}</p>
           )}
@@ -61,7 +61,7 @@ function ProfesionalCard({ prof, onClick }) {
 
       {/* Especialidad */}
       {prof.especialidad && (
-        <span className="text-xs px-2.5 py-1 rounded-full w-fit font-medium"
+        <span className="prof-badge text-xs px-2.5 py-1 rounded-full w-fit font-medium"
           style={{ background: "rgba(46,107,69,0.15)", color: "#4CAF7D", border: "1px solid rgba(46,107,69,0.25)" }}>
           {prof.especialidad}
         </span>
@@ -73,7 +73,7 @@ function ProfesionalCard({ prof, onClick }) {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-1"
+      <div className="prof-divider flex items-center justify-between pt-1"
         style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
         <div className="flex items-center gap-3 text-white/25 text-xs">
           {prof.ciudad && (
@@ -87,7 +87,7 @@ function ProfesionalCard({ prof, onClick }) {
             </span>
           )}
         </div>
-        <span className="text-[#CC9633] text-xs font-medium hover:underline">
+        <span className="prof-gold text-[#CC9633] text-xs font-medium hover:underline">
           Ver perfil →
         </span>
       </div>
@@ -102,21 +102,21 @@ function Modal({ prof, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="prof-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(6px)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col max-h-[90vh]"
+      <div className="prof-modal w-full max-w-lg rounded-2xl overflow-hidden flex flex-col max-h-[90vh]"
         style={{ background: "#120C08", border: "1px solid rgba(255,255,255,0.08)" }}>
 
         {/* Header modal */}
-        <div className="flex items-start justify-between p-6"
+        <div className="prof-divider flex items-start justify-between p-6"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="flex items-center gap-4">
             <Avatar nombre={fullName} photoURL={prof.photoURL} size="lg" />
             <div>
               <h2 className="text-white font-semibold text-lg">{fullName}</h2>
-              <p className="text-[#CC9633] text-sm mt-0.5">{prof.titulo || "Profesional"}</p>
+              <p className="prof-gold text-[#CC9633] text-sm mt-0.5">{prof.titulo || "Profesional"}</p>
               {prof.institucion && (
                 <p className="text-white/40 text-xs mt-0.5">{prof.institucion}</p>
               )}
@@ -129,7 +129,7 @@ function Modal({ prof, onClose }) {
             </div>
           </div>
           <button onClick={onClose}
-            className="text-white/30 hover:text-white transition-colors shrink-0 mt-1">
+            className="prof-close text-white/30 hover:text-white transition-colors shrink-0 mt-1">
             <X size={18} />
           </button>
         </div>
@@ -155,7 +155,7 @@ function Modal({ prof, onClose }) {
                 { label: "Institución",   value: prof.institucion,  icon: <Briefcase size={13} /> },
                 { label: "Ubicación",     value: prof.ciudad && prof.pais ? `${prof.ciudad}, ${prof.pais}` : prof.ciudad || prof.pais, icon: <MapPin size={13} /> },
               ].filter((i) => i.value).map((item) => (
-                <div key={item.label} className="rounded-xl px-3 py-3"
+                <div key={item.label} prof-tile className="rounded-xl px-3 py-3"
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   <div className="flex items-center gap-1.5 mb-1 text-white/30">
                     {item.icon}
@@ -173,7 +173,7 @@ function Modal({ prof, onClose }) {
             <div className="flex flex-col gap-2">
               {prof.email && (
                 <a href={`mailto:${prof.email}`}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-white/5"
+                  className="prof-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-white/5"
                   style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
                   <Mail size={14} className="text-[#CC9633] shrink-0" />
                   <span className="text-white/60 text-sm">{prof.email}</span>
@@ -268,6 +268,27 @@ export default function ViewProfesionales() {
   // ── UI ────────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5 max-w-5xl">
+      <style>{`
+  .theme-light main div.prof-card{background-color:#FFFFFF!important;border-color:rgba(46,107,69,0.12)!important;box-shadow:0 8px 24px rgba(47,40,31,0.06);}
+  .theme-light main div.prof-card:hover{box-shadow:0 14px 32px rgba(47,40,31,0.12);}
+  .theme-light main div.prof-divider{background-color:transparent!important;border-color:rgba(46,107,69,0.14)!important;}
+  .theme-light main .prof-gold{color:#A87414!important;}
+  .theme-light main .prof-badge{color:#2E6B45!important;background-color:rgba(46,107,69,0.10)!important;border-color:rgba(46,107,69,0.25)!important;}
+
+  .theme-light main .prof-overlay{background:rgba(47,40,31,0.45)!important;}
+  .theme-light main .prof-modal{background:#FFFFFF!important;border-color:rgba(46,107,69,0.16)!important;box-shadow:0 30px 80px rgba(47,40,31,0.25);}
+  .theme-light main .prof-close{color:rgba(47,40,31,0.45)!important;}
+  .theme-light main .prof-close:hover{color:#2E6B45!important;}
+  .theme-light main .prof-tile{background-color:#F7F5EC!important;border-color:rgba(46,107,69,0.12)!important;}
+  .theme-light main a.prof-link{background-color:#F7F5EC!important;border:1px solid rgba(46,107,69,0.12)!important;}
+  .theme-light main a.prof-link:hover{background-color:rgba(46,107,69,0.08)!important;}
+
+  .theme-light main .prof-search{background-color:#FFFFFF!important;border-color:rgba(46,107,69,0.18)!important;}
+  .theme-light main .prof-search::placeholder{color:rgba(47,40,31,0.4)!important;}
+  .theme-light main .prof-chip-off{color:#6B5F4D!important;background-color:#FFFFFF!important;}
+  .theme-light main .prof-chip-off:hover{color:#2E6B45!important;}
+  .theme-light main .prof-chip-on{color:#2E6B45!important;background-color:rgba(46,107,69,0.12)!important;}
+`}</style>
 
       {/* Título */}
       <div>
@@ -284,7 +305,7 @@ export default function ViewProfesionales() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por nombre, especialidad..."
-          className="w-full pl-9 pr-4 h-10 rounded-xl text-sm text-white outline-none placeholder:text-white/20"
+          className="prof-search w-full pl-9 pr-4 h-10 rounded-xl text-sm text-white outline-none placeholder:text-white/20"
           style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
         />
       </div>
@@ -295,7 +316,7 @@ export default function ViewProfesionales() {
           <button
             key={esp}
             onClick={() => setFiltroEsp(esp)}
-            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer"
+            className={`prof-chip ${filtroEsp === esp ? "prof-chip-on" : "prof-chip-off"} px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer`}
             style={{
               background: filtroEsp === esp ? "rgba(46,107,69,0.2)"  : "rgba(255,255,255,0.04)",
               border:     filtroEsp === esp ? "1px solid #2E6B45"    : "1px solid rgba(255,255,255,0.08)",
