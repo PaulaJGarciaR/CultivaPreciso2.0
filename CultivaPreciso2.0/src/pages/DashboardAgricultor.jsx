@@ -244,6 +244,32 @@ export default function DashboardAgricultor({ user }) {
     notas: "",
   });
 
+ // ── Cargar el cultivo apenas entra el usuario ─────────────────────────────
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const cargarCultivo = async () => {
+      try {
+        const snap = await getDoc(doc(db, "cultivos", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          setCultivo({
+            nombre: data.nombre ?? "",
+            hectareas: data.hectareas ?? "",
+            variedad: data.variedad ?? "",
+            fechaSiembra: data.fechaSiembra ?? "",
+            region: data.region ?? "",
+            notas: data.notas ?? "",
+          });
+        }
+      } catch (e) {
+        console.error("Error al cargar el cultivo:", e);
+      }
+    };
+
+    cargarCultivo();
+  }, [user?.uid]);
+  
   useEffect(() => {
     localStorage.setItem("cultiva_theme", theme);
   }, [theme]);

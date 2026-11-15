@@ -17,17 +17,19 @@ function PrivateRoute({ children, requiredRole }) {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    if (loading) return;
+
     if (!user) {
       setChecking(false);
       return;
     }
+
+    setChecking(true);
     getDoc(doc(db, "users", user.uid))
-      .then((snap) => {
-        setRole(snap.data()?.role || "agricultor");
-        setChecking(false);
-      })
-      .catch(() => setChecking(false));
-  }, [user]);
+      .then((snap) => setRole(snap.data()?.role || "agricultor"))
+      .catch((e) => console.error("Error leyendo el rol:", e))
+      .finally(() => setChecking(false));
+  }, [user, loading]);
 
   if (loading || checking)
     return <h1 style={{ color: "white" }}>Cargando...</h1>;
