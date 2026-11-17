@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
-import { buscarCoordenadas } from "../../../Service/ubicacion";
+import { buscarCoordenadas } from "../../../services/ubicacion";
 
 // ─── Paleta ────────────────────────────────────────────────────────────────────
 // ─── Paleta (variables CSS: oscuro por defecto, claro bajo .theme-light) ──────

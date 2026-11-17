@@ -6,7 +6,7 @@ import {
   Droplets, Wind, Leaf, Scissors, Waves, AlertTriangle, RefreshCw,
 } from "lucide-react";
 import { SectionHeader } from "./shared";
-import { buscarCoordenadas } from "../../../Service/ubicacion";
+import { buscarCoordenadas } from "../../../services/ubicacion";
 
 // ─── Configuración ───────────────────────────────────────────────
 
