@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
+import { buscarCoordenadas } from "../../../services/ubicacion";
 
 // ─── Paleta ────────────────────────────────────────────────────────────────────
 // ─── Paleta (variables CSS: oscuro por defecto, claro bajo .theme-light) ──────
@@ -68,8 +69,7 @@ const THEME_CSS = `
 `;
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
-const LAT = 8.5833;
-const LON = -73.1667;
+
 const GDD_BASE = 15;
 const GDD_CAP = 35;
 
@@ -1398,7 +1398,7 @@ function buildRecommendations(cultivo, weatherMap) {
 }
 
 // ─── Hook: Clima ───────────────────────────────────────────────────────────────
-function useWeather() {
+function useWeather(region) {
   const [weatherMap, setWeatherMap] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("cacao_weather_cache") || "{}");
@@ -1411,10 +1411,12 @@ function useWeather() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const fetchWeather = useCallback(async (silent = false) => {
     if (!silent) setWeatherLoading(true);
+    const { lat, lon, elevation } = await buscarCoordenadas(region);
     const url =
-      `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      (elevation != null ? `&elevation=${elevation}` : "") +
       `&daily=precipitation_sum,temperature_2m_max,temperature_2m_min,et0_fao_evapotranspiration,weathercode,windspeed_10m_max` +
-      `&current_weather=true&timezone=auto&forecast_days=16`;
+      `&current_weather=true&timezone=auto&past_days=14&forecast_days=16`;
     try {
       const data = await fetch(url).then((r) => r.json());
       const map = {};
@@ -1443,7 +1445,7 @@ function useWeather() {
     } finally {
       setWeatherLoading(false);
     }
-  }, []);
+  }, [region]);
   useEffect(() => {
     fetchWeather(false);
   }, [fetchWeather]);
@@ -1564,6 +1566,7 @@ function WeatherChip({
   weatherMap,
   weatherLoading,
   lastUpdated,
+  region,
 }) {
   const today = fmtDate(new Date()),
     tw = weatherMap[today];
@@ -1633,7 +1636,7 @@ function WeatherChip({
       </span>
       <div style={{ display: "flex", flexDirection: "column" }}>
         <span style={{ fontSize: 9, color: C.gray2, letterSpacing: ".05em" }}>
-          Tibú
+          {region || "Catatumbo"}
         </span>
         {ago && <span style={{ fontSize: 8, color: C.gray3 }}>{ago}</span>}
       </div>
@@ -2790,7 +2793,7 @@ export default function CacaoCalendar({ cultivo, user }) {
   });
   const { notes, loadingNotes, addNote, deleteNote } = useNotes(user);
   const { weatherMap, weatherLoading, currentWeather, lastUpdated } =
-    useWeather();
+    useWeather(cultivo?.region);
   const recommendations = useMemo(
     () => buildRecommendations(cultivoActivo, weatherMap),
     [cultivoActivo, weatherMap],
@@ -3082,6 +3085,7 @@ export default function CacaoCalendar({ cultivo, user }) {
                 weatherMap={weatherMap}
                 weatherLoading={weatherLoading}
                 lastUpdated={lastUpdated}
+                region={cultivo?.region}
               />
               <div
                 style={{
