@@ -10,6 +10,8 @@ import DashboardAgricultor from "./pages/DashboardAgricultor";
 import DashboardAdmin from "./pages/DashboardAdmin";
 import DashboardProfesional from "./pages/DashboardProfesional";
 import "./App.css";
+import PantallaCarga from "./pages/components/PantallaCarga";
+
 
 function PrivateRoute({ children, requiredRole }) {
   const [user, loading] = useAuthState(auth);
@@ -17,20 +19,21 @@ function PrivateRoute({ children, requiredRole }) {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    if (loading) return;
+
     if (!user) {
       setChecking(false);
       return;
     }
-    getDoc(doc(db, "users", user.uid))
-      .then((snap) => {
-        setRole(snap.data()?.role || "agricultor");
-        setChecking(false);
-      })
-      .catch(() => setChecking(false));
-  }, [user]);
 
-  if (loading || checking)
-    return <h1 style={{ color: "white" }}>Cargando...</h1>;
+    setChecking(true);
+    getDoc(doc(db, "users", user.uid))
+      .then((snap) => setRole(snap.data()?.role || "agricultor"))
+      .catch((e) => console.error("Error leyendo el rol:", e))
+      .finally(() => setChecking(false));
+  }, [user, loading]);
+
+  if (loading || checking) return <PantallaCarga />;
   if (!user) return <Navigate to="/comenzar" replace />;
   if (requiredRole && role !== requiredRole) return <Navigate to="/" replace />;
   return children;
