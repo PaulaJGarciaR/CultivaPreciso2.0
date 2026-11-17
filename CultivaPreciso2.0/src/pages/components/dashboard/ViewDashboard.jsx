@@ -10,6 +10,17 @@ const MONTHS = [
   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
 ];
 
+// Rendimiento anual en t/ha por variedad (mismos valores del Calendario)
+const RENDIMIENTO_T_HA = {
+  "Híbrido": 2.25, // CCN-51: 2,0–2,5 t/ha/año
+  "TCS (Trinitario Colombia Selection)": 1.75, // FEC-2: 1,5–2,0 t/ha/año
+};
+const RENDIMIENTO_DEFAULT = 1.75;
+
+// Forma de la curva mensual (la misma de antes, pero sin azar)
+const FORMA_MENSUAL = MONTHS.map((_, i) => Math.sin((i / 12) * Math.PI * 2 - 1.5) * 0.9 + 1.4);
+const SUMA_FORMA = FORMA_MENSUAL.reduce((a, b) => a + b, 0);
+
 export default function ViewDashboard({ cultivo, onGoTo }) {
   // ─────────────────────────────────────────────
   // STATES
@@ -28,7 +39,7 @@ export default function ViewDashboard({ cultivo, onGoTo }) {
     ? Math.floor((parseFloat(cultivo.hectareas) * 10000) / 6)
     : 0;
 
-  const maxH = Math.max(...harvestValues);
+  const maxH = Math.max(...harvestValues, 0.01);
 
   // ─────────────────────────────────────────────
   // GRÁFICA DINÁMICA
@@ -36,28 +47,14 @@ export default function ViewDashboard({ cultivo, onGoTo }) {
   useEffect(() => {
     if (!cultivo?.hectareas) return;
 
-    const hectareas = parseFloat(cultivo.hectareas || 1);
+    const hectareas = parseFloat(cultivo.hectareas) || 0;
+    const rendimiento = RENDIMIENTO_T_HA[cultivo.variedad] ?? RENDIMIENTO_DEFAULT;
+    const anual = hectareas * rendimiento; // toneladas al año de toda la finca
 
-    let base = hectareas * 0.35;
-
-    if (cultivo.variedad?.toLowerCase().includes("ccn")) {
-      base *= 1.25;
-    }
-
-    if (cultivo.variedad?.toLowerCase().includes("criollo")) {
-      base *= 0.9;
-    }
-
-    const generated = MONTHS.map((_, i) => {
-      const seasonal = Math.sin((i / 12) * Math.PI * 2 - 1.5) * 0.9 + 1.4;
-
-      const randomVariation = Math.random() * 0.4;
-
-      return Number((base * seasonal + randomVariation).toFixed(1));
-    });
-
-    setHarvestValues(generated);
-  }, [cultivo]);
+    setHarvestValues(
+      FORMA_MENSUAL.map((f) => Number(((anual * f) / SUMA_FORMA).toFixed(2)))
+    );
+  }, [cultivo.hectareas, cultivo.variedad]);
 
   // ─────────────────────────────────────────────
   // IA RECOMENDACIONES — solo cuando cambian los datos del cultivo
@@ -299,7 +296,7 @@ Formato:
           value={cultivo.variedad || "—"}
           icon={
             <svg
-            className="w-10 h-10 bg-[#2E6B45]/70 rounded-xl text-amber-50 p-1.5"
+              className="w-10 h-10 bg-[#2E6B45]/70 rounded-xl text-amber-50 p-1.5"
               xmlns="http://www.w3.org/2000/svg"
               width="24"
               height="24"
@@ -392,7 +389,7 @@ Formato:
               Producción mensual estimada
             </h3>
 
-            <span className="text-white/30 text-xs">t/ha</span>
+            <span className="text-white/30 text-xs">toneladas (finca)</span>
           </div>
 
           <div className="flex items-end gap-1.5" style={{ height: 110 }}>
@@ -447,6 +444,13 @@ Formato:
               <span className="text-white/40 text-xs">Pico máximo</span>
             </div>
           </div>
+            <p className="text-white/30 text-[11px] mt-2 leading-snug">
+              Estimación con el cultivo en plena producción (
+              {(RENDIMIENTO_T_HA[cultivo.variedad] ?? RENDIMIENTO_DEFAULT)
+                .toFixed(2)
+                .replace(".", ",")}{" "}
+              t/ha/año). La producción real depende de la edad y el manejo del cultivo.
+            </p>
         </div>
 
         {/* ───────────────── IA ───────────────── */}
