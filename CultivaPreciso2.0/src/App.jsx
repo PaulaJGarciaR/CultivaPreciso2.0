@@ -10,6 +10,8 @@ import DashboardAgricultor from "./pages/DashboardAgricultor";
 import DashboardAdmin from "./pages/DashboardAdmin";
 import DashboardProfesional from "./pages/DashboardProfesional";
 import "./App.css";
+import PantallaCarga from "./pages/components/PantallaCarga";
+
 
 function PrivateRoute({ children, requiredRole }) {
   const [user, loading] = useAuthState(auth);
@@ -31,8 +33,7 @@ function PrivateRoute({ children, requiredRole }) {
       .finally(() => setChecking(false));
   }, [user, loading]);
 
-  if (loading || checking)
-    return <h1 style={{ color: "white" }}>Cargando...</h1>;
+  if (loading || checking) return <PantallaCarga />;
   if (!user) return <Navigate to="/comenzar" replace />;
   if (requiredRole && role !== requiredRole) return <Navigate to="/" replace />;
   return children;

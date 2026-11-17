@@ -139,14 +139,14 @@ function WorldMap() {
             {/* Océano */}
             <rect width={W} height={H} fill="#c8ddd0" />
 
-            {countries.map(({ id, d }) => {
+            {countries.map(({ id, d }, i) => {
               const info = CACAO_INFO[id];
               const isCol = info?.isCol;
               const isCacao = !!info && !isCol;
 
               return (
                 <path
-                  key={id}
+                  key={`${id}-${i}`}
                   d={d}
                   fill={isCol ? "#2E6B45" : isCacao ? "#CC9633" : "#b8cfc0"}
                   stroke={isCol ? "#4CAF7D" : isCacao ? "#8B6820" : "#a0b8a8"}
