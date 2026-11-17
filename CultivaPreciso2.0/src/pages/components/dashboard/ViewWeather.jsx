@@ -6,14 +6,16 @@ import {
   Droplets, Wind, Leaf, Scissors, Waves, AlertTriangle, RefreshCw,
 } from "lucide-react";
 import { SectionHeader } from "./shared";
+import { buscarCoordenadas } from "../../../Service/ubicacion";
 
 // ─── Configuración ───────────────────────────────────────────────
-const LAT    = 8.55;
-const LON    = -73.15;
+
 const REGION = "Catatumbo, Norte de Santander";
 
-const DAYS_ES   = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
-const MONTHS_ES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+
+
+const DAYS_ES = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+const MONTHS_ES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 // ─── WMO helpers ─────────────────────────────────────────────────
 function WmoIcon({ code, size = 24, className = "" }) {
@@ -25,39 +27,50 @@ function WmoIcon({ code, size = 24, className = "" }) {
   if (code <= 59)  return <CloudDrizzle {...p} />;
   if (code <= 69)  return <CloudRain {...p} />;
   if (code <= 79)  return <Snowflake {...p} />;
-  if (code <= 84)  return <CloudSnow {...p} />;
+  if (code <= 82)  return <CloudRain {...p} />;
+  if (code <= 86)  return <CloudSnow {...p} />;
   if (code <= 99)  return <CloudLightning {...p} />;
   return                  <Thermometer {...p} />;
 }
 
+// El weather_code diario es el "peor clima del día": con una hora de
+// llovizna ya sale lluvia. Si la probabilidad es baja, mostramos nubes.
+function codigoSegunProbabilidad(code, prob) {
+  const esLluvia = code >= 51 && code <= 99;
+  if (!esLluvia || prob == null) return code;
+  if (prob < 15) return 2; // Parcialmente nublado
+  if (prob < 30) return 3; // Nublado
+  return code;
+}
+
 function wmoDesc(code) {
-  if (code === 0)  return "Despejado";
-  if (code <= 2)   return "Parcialmente nublado";
-  if (code === 3)  return "Nublado";
-  if (code <= 49)  return "Niebla";
-  if (code <= 59)  return "Llovizna";
-  if (code <= 69)  return "Lluvia";
-  if (code <= 79)  return "Nieve";
-  if (code <= 84)  return "Chubascos";
-  if (code <= 99)  return "Tormenta eléctrica";
+  if (code === 0) return "Despejado";
+  if (code <= 2) return "Parcialmente nublado";
+  if (code === 3) return "Nublado";
+  if (code <= 49) return "Niebla";
+  if (code <= 59) return "Llovizna";
+  if (code <= 69) return "Lluvia";
+  if (code <= 79) return "Nieve";
+  if (code <= 84) return "Chubascos";
+  if (code <= 99) return "Tormenta eléctrica";
   return "Variable";
 }
 
 // ─── Impacto agrícola ────────────────────────────────────────────
 function buildImpacts(daily) {
   const totalRain = daily.precipitation_sum.reduce((a, b) => a + b, 0);
-  const maxRain   = Math.max(...daily.precipitation_sum);
-  const goodDays  = daily.precipitation_probability_max.filter(p => p < 30).length;
-  const minTemp   = Math.min(...daily.temperature_2m_min);
-  const maxTemp   = Math.max(...daily.temperature_2m_max);
-  const highRisk  = maxRain > 15 || daily.precipitation_probability_max.some(p => p > 70);
-  const tempOk    = minTemp >= 18 && maxTemp <= 32;
+  const maxRain = Math.max(...daily.precipitation_sum);
+  const goodDays = daily.precipitation_probability_max.filter(p => p < 30).length;
+  const minTemp = Math.min(...daily.temperature_2m_min);
+  const maxTemp = Math.max(...daily.temperature_2m_max);
+  const highRisk = maxRain > 15 || daily.precipitation_probability_max.some(p => p > 70);
+  const tempOk = minTemp >= 18 && maxTemp <= 32;
 
   return [
     {
       Icon: Leaf,
-      iconBg:    highRisk ? "bg-red-500/10"      : "bg-[#2E6B45]/20",
-      iconColor: highRisk ? "text-red-400"       : "text-[#4CAF7D]",
+      iconBg: highRisk ? "bg-red-500/10" : "bg-[#2E6B45]/20",
+      iconColor: highRisk ? "text-red-400" : "text-[#4CAF7D]",
       title: "Riesgo de monilia",
       badge: highRisk ? "Alto" : "Bajo",
       badgeColor: highRisk ? "text-red-400 bg-red-500/15" : "text-[#4CAF7D] bg-[#2E6B45]/20",
@@ -67,34 +80,31 @@ function buildImpacts(daily) {
     },
     {
       Icon: Scissors,
-      iconBg:    goodDays >= 2 ? "bg-[#2E6B45]/20"   : "bg-amber-500/10",
-      iconColor: goodDays >= 2 ? "text-[#4CAF7D]"    : "text-amber-400",
+      iconBg: goodDays >= 2 ? "bg-[#2E6B45]/20" : "bg-amber-500/10",
+      iconColor: goodDays >= 2 ? "text-[#4CAF7D]" : "text-amber-400",
       title: "Días para labores de campo",
       badge: goodDays >= 2 ? "Óptimo" : "Limitado",
       badgeColor: goodDays >= 2 ? "text-[#4CAF7D] bg-[#2E6B45]/20" : "text-amber-400 bg-amber-500/15",
-      desc: `${goodDays} día${goodDays !== 1 ? "s" : ""} con baja probabilidad de lluvia esta semana. ${
-        goodDays >= 2 ? "Aprovechar para poda, fertilización y siembra." : "Planear labores en las ventanas secas disponibles."
-      }`,
+      desc: `${goodDays} día${goodDays !== 1 ? "s" : ""} con baja probabilidad de lluvia esta semana. ${goodDays >= 2 ? "Aprovechar para poda, fertilización y siembra." : "Planear labores en las ventanas secas disponibles."
+        }`,
     },
     {
       Icon: Waves,
       iconBg: "bg-blue-500/10", iconColor: "text-blue-400",
       title: "Balance hídrico",
       badge: "Normal", badgeColor: "text-blue-400 bg-blue-400/15",
-      desc: `Precipitación acumulada prevista: ${Math.round(totalRain)} mm en 7 días. ${
-        maxRain > 20 ? "No regar en días con lluvia prevista." : "Verificar humedad del suelo periódicamente."
-      }`,
+      desc: `Precipitación acumulada prevista: ${Math.round(totalRain)} mm en 7 días. ${maxRain > 20 ? "No regar en días con lluvia prevista." : "Verificar humedad del suelo periódicamente."
+        }`,
     },
     {
       Icon: Thermometer,
-      iconBg:    tempOk ? "bg-[#2E6B45]/20"   : "bg-amber-500/10",
-      iconColor: tempOk ? "text-[#4CAF7D]"    : "text-amber-400",
+      iconBg: tempOk ? "bg-[#2E6B45]/20" : "bg-amber-500/10",
+      iconColor: tempOk ? "text-[#4CAF7D]" : "text-amber-400",
       title: "Rango térmico",
       badge: tempOk ? "Óptimo" : "Atención",
       badgeColor: tempOk ? "text-[#4CAF7D] bg-[#2E6B45]/20" : "text-amber-400 bg-amber-500/15",
-      desc: `${Math.round(minTemp)}–${Math.round(maxTemp)}°C proyectados esta semana. ${
-        tempOk ? "Dentro del rango ideal para cacao (18–32°C)." : "Monitorear posible estrés térmico en el cultivo."
-      }`,
+      desc: `${Math.round(minTemp)}–${Math.round(maxTemp)}°C proyectados esta semana. ${tempOk ? "Dentro del rango ideal para cacao (18–32°C)." : "Monitorear posible estrés térmico en el cultivo."
+        }`,
     },
   ];
 }
@@ -158,9 +168,9 @@ function ImpactCard({ Icon, iconBg, iconColor, title, badge, badgeColor, desc })
 // ─── Componente principal ────────────────────────────────────────
 export default function ViewWeather({ cultivo }) {
   // Estados: "idle" | "loading" | "success" | "error"
-  const [status,  setStatus]  = useState("idle");
+  const [status, setStatus] = useState("idle");
   const [weather, setWeather] = useState(null);
-  const [errMsg,  setErrMsg]  = useState("");
+  const [errMsg, setErrMsg] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -168,9 +178,15 @@ export default function ViewWeather({ cultivo }) {
     (async () => {
       setStatus("loading");
       try {
+        const { lat, lon, elevation } = await buscarCoordenadas(
+          cultivo?.region,
+          controller.signal
+        );
+
         const url =
           `https://api.open-meteo.com/v1/forecast` +
-          `?latitude=${LAT}&longitude=${LON}` +
+          `?latitude=${lat}&longitude=${lon}` +
+          (elevation != null ? `&elevation=${elevation}` : "") +
           `&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,weather_code` +
           `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code` +
           `&timezone=America%2FBogota&forecast_days=7`;
@@ -193,14 +209,14 @@ export default function ViewWeather({ cultivo }) {
     })();
 
     return () => controller.abort();
-  }, []);
+  }, [cultivo?.region]);
 
   const region = cultivo?.region
     ? `Condiciones climáticas — ${cultivo.region}`
     : `Condiciones climáticas — ${REGION}`;
 
-  const now    = new Date();
-  const nowStr = `${DAYS_ES[now.getDay()]} ${now.getDate()} ${MONTHS_ES[now.getMonth()]} · ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+  const now = new Date();
+  const nowStr = `${DAYS_ES[now.getDay()]} ${now.getDate()} ${MONTHS_ES[now.getMonth()]} · ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
   // ── Loading ──────────────────────────────────────────────────
   if (status === "idle" || status === "loading") {
@@ -237,8 +253,8 @@ export default function ViewWeather({ cultivo }) {
   }
 
   // ── Success — aquí weather está garantizado ──────────────────
-  const cur     = weather.current;
-  const daily   = weather.daily;
+  const cur = weather.current;
+  const daily = weather.daily;
   const impacts = buildImpacts(daily);
 
   return (
@@ -267,9 +283,9 @@ export default function ViewWeather({ cultivo }) {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <StatPill icon={Droplets}  value={`${Math.round(cur.relative_humidity_2m)}%`}  label="Humedad" />
-            <StatPill icon={CloudRain} value={`${cur.precipitation} mm`}                   label="Precip." />
-            <StatPill icon={Wind}      value={`${Math.round(cur.wind_speed_10m)} km/h`}    label="Viento" />
+            <StatPill icon={Droplets} value={`${Math.round(cur.relative_humidity_2m)}%`} label="Humedad" />
+            <StatPill icon={CloudRain} value={`${cur.precipitation} mm`} label="Precip." />
+            <StatPill icon={Wind} value={`${Math.round(cur.wind_speed_10m)} km/h`} label="Viento" />
           </div>
         </div>
 
@@ -278,13 +294,13 @@ export default function ViewWeather({ cultivo }) {
           <p className="text-white/40 text-xs uppercase tracking-wider mb-4">Pronóstico 7 días</p>
           <div className="grid grid-cols-7 gap-2">
             {daily.time.map((t, i) => {
-              const dt    = new Date(t + "T12:00:00");
+              const dt = new Date(t + "T12:00:00");
               const label = i === 0 ? "Hoy" : DAYS_ES[dt.getDay()];
               return (
                 <DayColumn
                   key={t}
                   day={label}
-                  wmoCode={daily.weather_code[i]}
+                  wmoCode={codigoSegunProbabilidad(daily.weather_code[i], daily.precipitation_probability_max[i])}
                   max={daily.temperature_2m_max[i]}
                   min={daily.temperature_2m_min[i]}
                   rain={daily.precipitation_probability_max[i]}
@@ -308,7 +324,7 @@ export default function ViewWeather({ cultivo }) {
       </div>
 
       <p className="text-white/20 text-[10px] text-right">
-        Datos: Open-Meteo · Lat {LAT}, Lon {LON} · {nowStr}
+                Datos: Open-Meteo · Lat {weather.latitude?.toFixed(2)}, Lon {weather.longitude?.toFixed(2)} · {nowStr}
       </p>
     </div>
   );
