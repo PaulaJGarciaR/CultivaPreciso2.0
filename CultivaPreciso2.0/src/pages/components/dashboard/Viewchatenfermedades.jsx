@@ -1,5 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function mensajeError(status) {
+  if (status === 503 || status === 500)
+    return "El servicio de IA está saturado en este momento. Intenta de nuevo en unos minutos.";
+  if (status === 429)
+    return "Se alcanzó el límite de consultas. Espera un minuto e intenta de nuevo.";
+  if (status === 400 || status === 401 || status === 403)
+    return "Hay un problema de configuración con la IA. Avisa al administrador.";
+  if (status === 0)
+    return "No hay conexión a internet. Revisa tu conexión e intenta de nuevo.";
+  return "Intenta de nuevo en un momento.";
+}
+
 function TypingDots() {
   return (
     <div className="flex items-end gap-2 mb-3">
@@ -80,17 +94,17 @@ function Bubble({ msg }) {
             style={
               isUser
                 ? {
-                    background: "rgba(204,150,51,0.12)",
-                    border: "1px solid rgba(204,150,51,0.22)",
-                    color: "rgba(255,255,255,0.8)",
-                    borderRadius: "14px 14px 4px 14px",
-                  }
+                  background: "rgba(204,150,51,0.12)",
+                  border: "1px solid rgba(204,150,51,0.22)",
+                  color: "rgba(255,255,255,0.8)",
+                  borderRadius: "14px 14px 4px 14px",
+                }
                 : {
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    color: "rgba(255,255,255,0.68)",
-                    borderRadius: "14px 14px 14px 4px",
-                  }
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  color: "rgba(255,255,255,0.68)",
+                  borderRadius: "14px 14px 14px 4px",
+                }
             }
           >
             <div className="space-y-2">
@@ -138,8 +152,24 @@ export default function ChatEnfermedadesFlotante() {
     if (!file || !file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-      const base64 = e.target.result.split(",")[1];
-      setPendingImg({ url: e.target.result, base64, mimeType: file.type });
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1024;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          const scale = MAX / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        const base64 = dataUrl.split(",")[1];
+        setPendingImg({ url: dataUrl, base64, mimeType: "image/jpeg" });
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   };
@@ -171,11 +201,11 @@ export default function ChatEnfermedadesFlotante() {
         import.meta.env.VITE_GEMINI_API_KEY_5,
         import.meta.env.VITE_GEMINI_API_KEY_6,
       ].filter(Boolean);
-      
+
       if (apiKeys.length === 0) {
         throw new Error("API key no configurada. Por favor configura VITE_GEMINI_API_KEY en tu archivo .env");
       }
-      
+
       let data = null;
       let lastError = null;
 
@@ -231,47 +261,46 @@ REGLAS DE RESPUESTA:
 - Estructura clara: enfermedad -> por qué -> recomendaciones
 - El disclaimer SIEMPRE va al inicio`;
 
-      for (const apiKey of apiKeys) {
-        try {
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    role: "user",
-                    parts: userContent,
-                  },
-                ],
-                systemInstruction: {
-                  parts: [{ text: systemPrompt }],
-                },
-                generationConfig: {
-                  maxOutputTokens: 700,
-                  temperature: 0.35,
-                  topP: 0.8,
-                },
-              }),
-            }
-          );
+      const MODELOS = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];
+      let keyIndex = 0;
 
-          const parsed = await res.json().catch(() => ({}));
-          if (!res.ok || parsed.error) {
-            throw new Error(parsed.error?.message || `Error HTTP ${res.status}`);
+      for (const modelo of MODELOS) {
+        for (let intento = 0; intento < 3; intento++) {
+          const apiKey = apiKeys[keyIndex % apiKeys.length];
+          keyIndex++;
+          try {
+            const res = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  contents: [{ role: "user", parts: userContent }],
+                  systemInstruction: { parts: [{ text: systemPrompt }] },
+                  generationConfig: { maxOutputTokens: 2048 },
+                }),
+              }
+            );
+            const parsed = await res.json().catch(() => ({}));
+            if (res.ok && !parsed.error) {
+              data = parsed;
+              break;
+            }
+            lastError = { status: res.status };
+            console.warn(`[${modelo}] intento ${intento + 1} falló (HTTP ${res.status}):`, parsed.error?.message);
+          } catch (e) {
+            lastError = { status: 0 };
+            console.warn(`[${modelo}] intento ${intento + 1} sin conexión:`, e.message);
           }
-          data = parsed;
-          break;
-        } catch (e) {
-          lastError = e;
+          if (intento < 2) await esperar(1000 * 2 ** intento);
         }
+        if (data) break;
       }
-      
+
       if (!data) {
-        throw lastError || new Error("No se pudo obtener respuesta de la IA");
+        throw new Error(mensajeError(lastError?.status));
       }
-      
+
       if (data.error) {
         throw new Error(data.error.message || "Error en la API de Gemini");
       }
@@ -294,10 +323,10 @@ REGLAS DE RESPUESTA:
       console.error("Error en el chat:", error);
       setMessages((p) => [
         ...p,
-        { 
-          role: "assistant", 
-          text: `No pude completar el análisis. ${error.message || "Intenta de nuevo con una imagen más clara o una descripción de los síntomas."}`, 
-          time: now() 
+        {
+          role: "assistant",
+          text: `No pude completar el análisis. ${error.message || "Intenta de nuevo con una imagen más clara o una descripción de los síntomas."}`,
+          time: now()
         },
       ]);
     } finally {
@@ -405,8 +434,8 @@ REGLAS DE RESPUESTA:
             }}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="#CC9633" strokeWidth="2" className="w-3 h-3 shrink-0">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
             <p className="chat-disc-text text-xs" style={{ color: "rgba(255,255,255,0.38)" }}>
               Análisis orientativo — consulta con un especialista.
@@ -432,7 +461,7 @@ REGLAS DE RESPUESTA:
               </p>
               <button onClick={() => setPendingImg(null)} className="chat-pending-x text-white/25 hover:text-red-400">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
@@ -457,9 +486,9 @@ REGLAS DE RESPUESTA:
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="chat-upload-fg w-4 h-4"
                 style={{ color: "rgba(255,255,255,0.28)" }}>
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
               </svg>
               <span className="chat-upload-fg text-xs" style={{ color: "rgba(255,255,255,0.28)" }}>
                 Clic o arrastra una imagen aquí
@@ -497,8 +526,8 @@ REGLAS DE RESPUESTA:
                 }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-3.5 h-3.5">
-                  <line x1="22" y1="2" x2="11" y2="13"/>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
                 </svg>
               </button>
             </div>
@@ -523,12 +552,12 @@ REGLAS DE RESPUESTA:
       >
         {open ? (
           <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-5 h-5">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         ) : (
           <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-5 h-5">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         )}
         {/* Badge */}

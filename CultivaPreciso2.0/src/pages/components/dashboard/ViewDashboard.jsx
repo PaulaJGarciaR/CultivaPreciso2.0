@@ -3,28 +3,20 @@
 import { useEffect, useState } from "react";
 import { StatCard, RecCard } from "./shared";
 
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
 const MONTHS = [
-  "Ene",
-  "Feb",
-  "Mar",
-  "Abr",
-  "May",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dic",
+  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
 ];
 
 export default function ViewDashboard({ cultivo, onGoTo }) {
   // ─────────────────────────────────────────────
   // STATES
   // ─────────────────────────────────────────────
-  const [harvestValues, setHarvestValues] = useState([
-    1.2, 1.8, 1.4, 2.2, 3.0, 2.8, 3.5, 4.2, 3.8, 2.5, 2.0, 1.5,
-  ]);
+  const [harvestValues, setHarvestValues] = useState(
+    [1.2, 1.8, 1.4, 2.2, 3.0, 2.8, 3.5, 4.2, 3.8, 2.5, 2.0, 1.5]
+  );
 
   const [aiRecs, setAiRecs] = useState([]);
   const [loadingAI, setLoadingAI] = useState(false);
@@ -68,38 +60,36 @@ export default function ViewDashboard({ cultivo, onGoTo }) {
   }, [cultivo]);
 
   // ─────────────────────────────────────────────
-  // IA RECOMENDACIONES — refresca cada 2 minutos
+  // IA RECOMENDACIONES — solo cuando cambian los datos del cultivo
   // ─────────────────────────────────────────────
   useEffect(() => {
     if (!cultivo?.hectareas) return;
 
-    generateRecommendations();
+    const cacheKey = `recsIA_${cultivo.hectareas}_${cultivo.variedad}_${cultivo.region}_${cultivo.fechaSiembra}`;
+    const guardado = sessionStorage.getItem(cacheKey);
 
-    const interval = setInterval(
-      () => {
-        generateRecommendations();
-      },
-      1 * 60 * 1000,
-    );
+    if (guardado) {
+      setAiRecs(JSON.parse(guardado));
+      return;
+    }
 
-    return () => clearInterval(interval);
-  }, [cultivo]);
+    generateRecommendations(cacheKey);
+
+  }, [cultivo.hectareas, cultivo.variedad, cultivo.region, cultivo.fechaSiembra]);
 
   // ─────────────────────────────────────────────
   // GEMINI IA
   // ─────────────────────────────────────────────
-  const generateRecommendations = async () => {
+  const generateRecommendations = async (cacheKey) => {
+
     try {
       setLoadingAI(true);
 
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-      console.log("API KEY:", apiKey);
-
       if (!apiKey) {
         throw new Error("No existe API KEY");
       }
-
       const prompt = `
 Eres un ingeniero agrónomo especializado en cacao.
 
@@ -124,35 +114,35 @@ Formato:
 ]
 `;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
+      const MODELOS = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];
+      let data = null;
 
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: prompt,
-                  },
-                ],
-              },
-            ],
-
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 300,
-            },
-          }),
-        },
-      );
-
-      const data = await response.json();
+      for (const modelo of MODELOS) {
+        for (let intento = 0; intento < 3; intento++) {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                  maxOutputTokens: 1024,
+                  responseMimeType: "application/json",
+                },
+              }),
+            }
+          );
+          const parsed = await response.json().catch(() => ({}));
+          if (response.ok && !parsed.error) {
+            data = parsed;
+            break;
+          }
+          console.warn(`[${modelo}] intento ${intento + 1} falló (HTTP ${response.status})`);
+          if (intento < 2) await esperar(1000 * 2 ** intento);
+        }
+        if (data) break;
+      }
 
       console.log("RESPUESTA GEMINI:", data);
 
@@ -212,9 +202,12 @@ Formato:
             : r.priority === "Media"
               ? "bg-[#CC9633]/15 text-[#CC9633]"
               : "bg-[#2E6B45]/20 text-[#4CAF7D]",
+
       }));
 
       setAiRecs(mapped);
+      sessionStorage.setItem(cacheKey, JSON.stringify(mapped));
+
     } catch (error) {
       console.error("ERROR IA:", error);
 
@@ -495,7 +488,9 @@ Formato:
             </div>
           ) : loadingAI ? (
             <div className="space-y-3">
+
               {[1, 2, 3].map((i) => (
+
                 <div
                   key={i}
                   className="h-20 rounded-xl animate-pulse"
